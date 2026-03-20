@@ -10,9 +10,16 @@ import FormDetailDialog from "@/components/FormDetailDialog";
 
 export default function Modules() {
   const [selectedModule, setSelectedModule] = useState<string>("Master");
+  const [selectedItem, setSelectedItem] = useState<ERPMasterItem | null>(null);
+  const [dialogOpen, setDialogOpen] = useState(false);
   const moduleForms = erpMasterData.filter((i) => i.module === selectedModule && i.type === "FORM");
   const moduleReports = erpMasterData.filter((i) => i.module === selectedModule && i.type === "REPORT");
   const moduleStats = dashboardStats.moduleCounts.find((m) => m.module === selectedModule);
+
+  const openDetail = (item: ERPMasterItem) => {
+    setSelectedItem(item);
+    setDialogOpen(true);
+  };
 
   return (
     <div className="p-6 space-y-4 animate-fade-in">
