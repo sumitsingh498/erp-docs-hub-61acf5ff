@@ -1,5 +1,5 @@
 import { useState, useMemo } from "react";
-import { erpMasterData, MODULES, type ERPType, type ERPStatus } from "@/data/mock-data";
+import { erpMasterData, MODULES, type ERPType, type ERPStatus, type ERPMasterItem } from "@/data/mock-data";
 import { StatusBadge, PriorityBadge, TypeBadge } from "@/components/StatusBadge";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -7,12 +7,20 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Progress } from "@/components/ui/progress";
 import { Search, Download, Upload } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import FormDetailDialog from "@/components/FormDetailDialog";
 
 export default function MasterRegister() {
   const [search, setSearch] = useState("");
   const [moduleFilter, setModuleFilter] = useState<string>("all");
   const [typeFilter, setTypeFilter] = useState<string>("all");
   const [statusFilter, setStatusFilter] = useState<string>("all");
+  const [selectedItem, setSelectedItem] = useState<ERPMasterItem | null>(null);
+  const [dialogOpen, setDialogOpen] = useState(false);
+
+  const openDetail = (item: ERPMasterItem) => {
+    setSelectedItem(item);
+    setDialogOpen(true);
+  };
 
   const filtered = useMemo(() => {
     return erpMasterData.filter((item) => {
@@ -93,8 +101,8 @@ export default function MasterRegister() {
           </TableHeader>
           <TableBody>
             {filtered.map((item) => (
-              <TableRow key={item.id} className="hover:bg-muted/30 cursor-pointer">
-                <TableCell className="font-mono text-xs text-primary">{item.originalId}</TableCell>
+              <TableRow key={item.id} className="hover:bg-muted/30 cursor-pointer" onClick={() => openDetail(item)}>
+                <TableCell className="font-mono text-xs text-primary underline decoration-dotted underline-offset-2 hover:text-primary/80">{item.originalId}</TableCell>
                 <TableCell className="text-sm font-medium">{item.displayName}</TableCell>
                 <TableCell className="text-xs text-muted-foreground">{item.module}</TableCell>
                 <TableCell><TypeBadge type={item.type} /></TableCell>
@@ -113,6 +121,7 @@ export default function MasterRegister() {
           </TableBody>
         </Table>
       </div>
+      <FormDetailDialog item={selectedItem} open={dialogOpen} onOpenChange={setDialogOpen} />
     </div>
   );
 }

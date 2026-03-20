@@ -1,17 +1,25 @@
 import { useState } from "react";
-import { MODULES, erpMasterData, dashboardStats } from "@/data/mock-data";
+import { MODULES, erpMasterData, dashboardStats, type ERPMasterItem } from "@/data/mock-data";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { StatusBadge, TypeBadge } from "@/components/StatusBadge";
 import { Progress } from "@/components/ui/progress";
+import FormDetailDialog from "@/components/FormDetailDialog";
 
 export default function Modules() {
   const [selectedModule, setSelectedModule] = useState<string>("Master");
+  const [selectedItem, setSelectedItem] = useState<ERPMasterItem | null>(null);
+  const [dialogOpen, setDialogOpen] = useState(false);
   const moduleForms = erpMasterData.filter((i) => i.module === selectedModule && i.type === "FORM");
   const moduleReports = erpMasterData.filter((i) => i.module === selectedModule && i.type === "REPORT");
   const moduleStats = dashboardStats.moduleCounts.find((m) => m.module === selectedModule);
+
+  const openDetail = (item: ERPMasterItem) => {
+    setSelectedItem(item);
+    setDialogOpen(true);
+  };
 
   return (
     <div className="p-6 space-y-4 animate-fade-in">
@@ -80,8 +88,8 @@ export default function Modules() {
               </TableHeader>
               <TableBody>
                 {moduleForms.map((item) => (
-                  <TableRow key={item.id}>
-                    <TableCell className="font-mono text-xs text-primary">{item.originalId}</TableCell>
+                  <TableRow key={item.id} className="hover:bg-muted/30 cursor-pointer" onClick={() => openDetail(item)}>
+                    <TableCell className="font-mono text-xs text-primary underline decoration-dotted underline-offset-2 hover:text-primary/80">{item.originalId}</TableCell>
                     <TableCell className="text-sm">{item.displayName}</TableCell>
                     <TableCell className="text-xs text-muted-foreground">{item.subModule}</TableCell>
                     <TableCell><StatusBadge status={item.status} /></TableCell>
@@ -114,8 +122,8 @@ export default function Modules() {
               </TableHeader>
               <TableBody>
                 {moduleReports.map((item) => (
-                  <TableRow key={item.id}>
-                    <TableCell className="font-mono text-xs text-primary">{item.originalId}</TableCell>
+                  <TableRow key={item.id} className="hover:bg-muted/30 cursor-pointer" onClick={() => openDetail(item)}>
+                    <TableCell className="font-mono text-xs text-primary underline decoration-dotted underline-offset-2 hover:text-primary/80">{item.originalId}</TableCell>
                     <TableCell className="text-sm">{item.displayName}</TableCell>
                     <TableCell><StatusBadge status={item.status} /></TableCell>
                     <TableCell className="text-xs">{item.owner}</TableCell>
@@ -149,6 +157,7 @@ export default function Modules() {
           </Card>
         </TabsContent>
       </Tabs>
+      <FormDetailDialog item={selectedItem} open={dialogOpen} onOpenChange={setDialogOpen} />
     </div>
   );
 }
