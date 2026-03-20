@@ -157,6 +157,7 @@ export default function Modules() {
           </Card>
         </TabsContent>
       </Tabs>
+      <FormDetailDialog item={selectedItem} open={dialogOpen} onOpenChange={setDialogOpen} />
     </div>
   );
 }
