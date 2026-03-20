@@ -1,5 +1,5 @@
 import { useState, useMemo } from "react";
-import { erpMasterData, MODULES, type ERPType, type ERPStatus } from "@/data/mock-data";
+import { erpMasterData, MODULES, type ERPType, type ERPStatus, type ERPMasterItem } from "@/data/mock-data";
 import { StatusBadge, PriorityBadge, TypeBadge } from "@/components/StatusBadge";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -7,6 +7,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Progress } from "@/components/ui/progress";
 import { Search, Download, Upload } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import FormDetailDialog from "@/components/FormDetailDialog";
 
 export default function MasterRegister() {
   const [search, setSearch] = useState("");
