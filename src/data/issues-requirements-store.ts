@@ -49,12 +49,16 @@ export interface Issue {
   status: IssueStatus;
   reportedBy: string;
   assignee: string;
+  assignedBy: string;
+  dueDate: string;
   linkedType: LinkedType;
   linkedId: string;
   linkedName: string;
   module: string;
+  tags: string[];
   createdAt: string;
   history: HistoryEntry[];
+  comments: Comment[];
 }
 
 interface Store {
