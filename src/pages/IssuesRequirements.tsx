@@ -241,7 +241,7 @@ export default function IssuesRequirements() {
                           <Badge variant="outline" className={`text-[10px] ${issStatusColors[iss.status]}`}>{iss.status}</Badge>
                         </SelectTrigger>
                         <SelectContent>
-                          {(["Open", "In Progress", "Resolved", "Closed"] as IssueStatus[]).map((s) => <SelectItem key={s} value={s}>{s}</SelectItem>)}
+                          {(["Open", "In Progress", "Testing", "Resolved", "Closed", "Reopened"] as IssueStatus[]).map((s) => <SelectItem key={s} value={s}>{s}</SelectItem>)}
                         </SelectContent>
                       </Select>
                     </TableCell>
