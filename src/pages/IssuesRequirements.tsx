@@ -72,7 +72,7 @@ export default function IssuesRequirements() {
 
   const handleAddReq = () => {
     if (!newReq.title.trim()) return;
-    addRequirement({ ...newReq, status: "Open" });
+    addRequirement({ ...newReq, status: "Open", assignedBy: "Current User", dueDate: "", tags: [] });
     setNewReq({ title: "", description: "", priority: "Medium", assignee: "", linkedType: "General", linkedId: "", linkedName: "", module: "" });
     setShowAddReq(false);
   };
