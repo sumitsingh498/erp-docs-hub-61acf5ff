@@ -29,12 +29,16 @@ export interface Requirement {
   priority: Priority;
   status: ReqStatus;
   assignee: string;
+  assignedBy: string;
+  dueDate: string;
   linkedType: LinkedType;
   linkedId: string;
   linkedName: string;
   module: string;
+  tags: string[];
   createdAt: string;
   history: HistoryEntry[];
+  comments: Comment[];
 }
 
 export interface Issue {
