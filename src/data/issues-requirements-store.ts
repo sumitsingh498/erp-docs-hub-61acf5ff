@@ -64,12 +64,14 @@ export interface Issue {
 interface Store {
   requirements: Requirement[];
   issues: Issue[];
-  addRequirement: (req: Omit<Requirement, "id" | "createdAt" | "history">) => void;
-  addIssue: (iss: Omit<Issue, "id" | "createdAt" | "history">) => void;
+  addRequirement: (req: Omit<Requirement, "id" | "createdAt" | "history" | "comments">) => void;
+  addIssue: (iss: Omit<Issue, "id" | "createdAt" | "history" | "comments">) => void;
   updateRequirementStatus: (id: string, status: ReqStatus, changedBy?: string) => void;
   updateIssueStatus: (id: string, status: IssueStatus, changedBy?: string) => void;
   updateRequirementField: (id: string, field: string, value: string, changedBy?: string) => void;
   updateIssueField: (id: string, field: string, value: string, changedBy?: string) => void;
+  addRequirementComment: (id: string, user: string, text: string) => void;
+  addIssueComment: (id: string, user: string, text: string) => void;
   removeRequirement: (id: string) => void;
   removeIssue: (id: string) => void;
 }
