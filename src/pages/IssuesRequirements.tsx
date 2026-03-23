@@ -30,8 +30,10 @@ const reqStatusColors: Record<string, string> = {
 const issStatusColors: Record<string, string> = {
   Open: "bg-red-500/15 text-red-700 border-red-200",
   "In Progress": "bg-amber-500/15 text-amber-700 border-amber-200",
+  Testing: "bg-violet-500/15 text-violet-700 border-violet-200",
   Resolved: "bg-green-500/15 text-green-700 border-green-200",
   Closed: "bg-muted text-muted-foreground border-border",
+  Reopened: "bg-red-500/15 text-red-700 border-red-200",
 };
 
 const LINKED_TYPES: LinkedType[] = ["Form", "Report", "Module", "Menu", "Documentation", "General"];
