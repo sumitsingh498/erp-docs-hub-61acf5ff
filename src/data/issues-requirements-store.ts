@@ -3,7 +3,14 @@ import type { Priority } from "./mock-data";
 
 export type ReqStatus = "Open" | "In Progress" | "Completed" | "Deferred";
 export type IssueSeverity = "Critical" | "High" | "Medium" | "Low";
-export type IssueStatus = "Open" | "In Progress" | "Resolved" | "Closed";
+export type IssueStatus = "Open" | "In Progress" | "Testing" | "Resolved" | "Closed" | "Reopened";
+
+export interface Comment {
+  id: string;
+  user: string;
+  text: string;
+  timestamp: string;
+}
 export type LinkedType = "Form" | "Report" | "Module" | "Menu" | "Documentation" | "General";
 
 export interface HistoryEntry {
