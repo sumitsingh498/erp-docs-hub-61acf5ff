@@ -97,7 +97,7 @@ export default function FormDetailDialog({ item, open, onOpenChange, onSave }: P
 
   const handleAddReq = () => {
     if (!newReq.title.trim() || !currentItem) return;
-    addRequirement({ ...newReq, status: "Open", linkedType: currentItem.type === "FORM" ? "Form" : currentItem.type === "REPORT" ? "Report" : "General", linkedId: currentItem.originalId, linkedName: currentItem.displayName, module: currentItem.module });
+    addRequirement({ ...newReq, status: "Open", assignedBy: "Current User", dueDate: "", tags: [], linkedType: currentItem.type === "FORM" ? "Form" : currentItem.type === "REPORT" ? "Report" : "General", linkedId: currentItem.originalId, linkedName: currentItem.displayName, module: currentItem.module });
     setNewReq({ title: "", description: "", priority: "Medium", assignee: "" });
     setShowNewReq(false);
   };
