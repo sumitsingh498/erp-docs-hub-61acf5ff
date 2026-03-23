@@ -79,7 +79,7 @@ export default function IssuesRequirements() {
 
   const handleAddIssue = () => {
     if (!newIssue.title.trim()) return;
-    addIssue({ ...newIssue, status: "Open" });
+    addIssue({ ...newIssue, status: "Open", assignedBy: "Current User", dueDate: "", tags: [] });
     setNewIssue({ title: "", description: "", severity: "Medium", assignee: "", reportedBy: "", linkedType: "General", linkedId: "", linkedName: "", module: "" });
     setShowAddIssue(false);
   };

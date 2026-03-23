@@ -104,7 +104,7 @@ export default function FormDetailDialog({ item, open, onOpenChange, onSave }: P
 
   const handleAddIssue = () => {
     if (!newIssue.title.trim() || !currentItem) return;
-    addIssue({ ...newIssue, status: "Open", reportedBy: "Current User", linkedType: currentItem.type === "FORM" ? "Form" : currentItem.type === "REPORT" ? "Report" : "General", linkedId: currentItem.originalId, linkedName: currentItem.displayName, module: currentItem.module });
+    addIssue({ ...newIssue, status: "Open", reportedBy: "Current User", assignedBy: "Current User", dueDate: "", tags: [], linkedType: currentItem.type === "FORM" ? "Form" : currentItem.type === "REPORT" ? "Report" : "General", linkedId: currentItem.originalId, linkedName: currentItem.displayName, module: currentItem.module });
     setNewIssue({ title: "", description: "", severity: "Medium", assignee: "" });
     setShowNewIssue(false);
   };
