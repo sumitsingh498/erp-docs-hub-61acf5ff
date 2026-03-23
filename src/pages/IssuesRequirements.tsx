@@ -30,8 +30,10 @@ const reqStatusColors: Record<string, string> = {
 const issStatusColors: Record<string, string> = {
   Open: "bg-red-500/15 text-red-700 border-red-200",
   "In Progress": "bg-amber-500/15 text-amber-700 border-amber-200",
+  Testing: "bg-violet-500/15 text-violet-700 border-violet-200",
   Resolved: "bg-green-500/15 text-green-700 border-green-200",
   Closed: "bg-muted text-muted-foreground border-border",
+  Reopened: "bg-red-500/15 text-red-700 border-red-200",
 };
 
 const LINKED_TYPES: LinkedType[] = ["Form", "Report", "Module", "Menu", "Documentation", "General"];
@@ -72,14 +74,14 @@ export default function IssuesRequirements() {
 
   const handleAddReq = () => {
     if (!newReq.title.trim()) return;
-    addRequirement({ ...newReq, status: "Open" });
+    addRequirement({ ...newReq, status: "Open", assignedBy: "Current User", dueDate: "", tags: [] });
     setNewReq({ title: "", description: "", priority: "Medium", assignee: "", linkedType: "General", linkedId: "", linkedName: "", module: "" });
     setShowAddReq(false);
   };
 
   const handleAddIssue = () => {
     if (!newIssue.title.trim()) return;
-    addIssue({ ...newIssue, status: "Open" });
+    addIssue({ ...newIssue, status: "Open", assignedBy: "Current User", dueDate: "", tags: [] });
     setNewIssue({ title: "", description: "", severity: "Medium", assignee: "", reportedBy: "", linkedType: "General", linkedId: "", linkedName: "", module: "" });
     setShowAddIssue(false);
   };
@@ -241,7 +243,7 @@ export default function IssuesRequirements() {
                           <Badge variant="outline" className={`text-[10px] ${issStatusColors[iss.status]}`}>{iss.status}</Badge>
                         </SelectTrigger>
                         <SelectContent>
-                          {(["Open", "In Progress", "Resolved", "Closed"] as IssueStatus[]).map((s) => <SelectItem key={s} value={s}>{s}</SelectItem>)}
+                          {(["Open", "In Progress", "Testing", "Resolved", "Closed", "Reopened"] as IssueStatus[]).map((s) => <SelectItem key={s} value={s}>{s}</SelectItem>)}
                         </SelectContent>
                       </Select>
                     </TableCell>
