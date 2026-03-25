@@ -253,6 +253,9 @@ export default function IssuesRequirements() {
                     <TableCell className="text-xs">{iss.assignee}</TableCell>
                     <TableCell>
                       <div className="flex gap-0.5">
+                        <Button variant="ghost" size="icon" className="h-6 w-6" title="Root Cause" onClick={() => setRootCauseIssue(iss)}>
+                          <Zap size={12} className="text-warning" />
+                        </Button>
                         <Button variant="ghost" size="icon" className="h-6 w-6" title="View History" onClick={() => setHistoryItem(iss)}>
                           <History size={12} className="text-muted-foreground" />
                         </Button>
