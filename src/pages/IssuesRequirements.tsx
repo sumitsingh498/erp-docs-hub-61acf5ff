@@ -48,6 +48,7 @@ export default function IssuesRequirements() {
   const [showAddReq, setShowAddReq] = useState(false);
   const [showAddIssue, setShowAddIssue] = useState(false);
   const [historyItem, setHistoryItem] = useState<Requirement | Issue | null>(null);
+  const [rootCauseIssue, setRootCauseIssue] = useState<Issue | null>(null);
 
   const [newReq, setNewReq] = useState({ title: "", description: "", priority: "Medium" as Priority, assignee: "", linkedType: "General" as LinkedType, linkedId: "", linkedName: "", module: "" });
   const [newIssue, setNewIssue] = useState({ title: "", description: "", severity: "Medium" as IssueSeverity, assignee: "", reportedBy: "", linkedType: "General" as LinkedType, linkedId: "", linkedName: "", module: "" });
