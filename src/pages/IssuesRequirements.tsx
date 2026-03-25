@@ -443,6 +443,9 @@ export default function IssuesRequirements() {
           </div>
         </DialogContent>
       </Dialog>
+
+      {/* Root Cause Analysis */}
+      <RootCauseAnalysis issue={rootCauseIssue} open={!!rootCauseIssue} onOpenChange={() => setRootCauseIssue(null)} />
     </div>
   );
 }
