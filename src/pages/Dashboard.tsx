@@ -8,7 +8,7 @@ import { useActivityStore } from "@/data/activity-store";
 import {
   Database, FileText, LayoutGrid, AlertTriangle,
   CheckCircle2, Clock, XCircle, Layers, ClipboardList, Bug,
-  ListChecks, Bell, TrendingUp, Users,
+  ListChecks, Bell, TrendingUp, Users, Lightbulb, Zap,
 } from "lucide-react";
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell, PieChart, Pie, LineChart, Line, CartesianGrid } from "recharts";
 import { Link } from "react-router-dom";
