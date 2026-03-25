@@ -13,7 +13,8 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { PriorityBadge } from "@/components/StatusBadge";
-import { Plus, Search, ClipboardList, AlertTriangle, Trash2, History, User } from "lucide-react";
+import { Plus, Search, ClipboardList, AlertTriangle, Trash2, History, User, Zap } from "lucide-react";
+import RootCauseAnalysis from "@/components/RootCauseAnalysis";
 
 const sevColors: Record<string, string> = {
   Critical: "bg-red-500/15 text-red-700 border-red-200",
