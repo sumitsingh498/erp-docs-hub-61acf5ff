@@ -277,6 +277,59 @@ export default function Dashboard() {
         </Card>
       </div>
 
+      {/* Decision Support Layer */}
+      <Card className="border shadow-sm border-primary/20 bg-primary/5">
+        <CardHeader className="pb-2">
+          <CardTitle className="text-sm font-semibold flex items-center gap-2">
+            <Lightbulb size={16} className="text-warning" />
+            Decision Support — Smart Insights
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-2">
+            {(() => {
+              const insights: { icon: typeof Zap; text: string; severity: "danger" | "warning" | "info" }[] = [];
+              // Module documentation gaps
+              dashboardStats.moduleCounts.forEach((m) => {
+                const moduleForms = erpMasterData.filter((f) => f.module === m.module);
+                const avg = moduleForms.length > 0 ? Math.round(moduleForms.reduce((a, f) => a + f.percentComplete, 0) / moduleForms.length) : 0;
+                if (avg < 70) insights.push({ icon: AlertTriangle, text: `${m.module} module has ${100 - avg}% incomplete documentation`, severity: "warning" });
+              });
+              // Critical issues per form
+              const formIssueCounts: Record<string, { name: string; count: number }> = {};
+              openIssues.forEach((i) => {
+                if (i.severity === "Critical" || i.severity === "High") {
+                  formIssueCounts[i.linkedName] = formIssueCounts[i.linkedName] || { name: i.linkedName, count: 0 };
+                  formIssueCounts[i.linkedName].count++;
+                }
+              });
+              Object.values(formIssueCounts).forEach((f) => {
+                if (f.count >= 1) insights.push({ icon: Bug, text: `${f.name} has ${f.count} open critical/high issue(s)`, severity: "danger" });
+              });
+              // Overdue tasks insight
+              if (overdueTasks.length > 0) insights.push({ icon: Clock, text: `${overdueTasks.length} task(s) past due date — reassign or escalate`, severity: "warning" });
+              // Unused forms
+              const lowActivityForms = erpMasterData.filter((f) => f.percentComplete < 50 && f.status !== "Deprecated");
+              if (lowActivityForms.length > 0) insights.push({ icon: Zap, text: `${lowActivityForms.length} forms are below 50% completion`, severity: "info" });
+
+              return insights.slice(0, 6).map((insight, i) => {
+                const Icon = insight.icon;
+                return (
+                  <div key={i} className={`flex items-start gap-2 p-2.5 rounded-lg text-xs ${
+                    insight.severity === "danger" ? "bg-red-500/10 text-red-700" :
+                    insight.severity === "warning" ? "bg-amber-500/10 text-amber-700" :
+                    "bg-blue-500/10 text-blue-700"
+                  }`}>
+                    <Icon size={14} className="shrink-0 mt-0.5" />
+                    <span>{insight.text}</span>
+                  </div>
+                );
+              });
+            })()}
+          </div>
+        </CardContent>
+      </Card>
+
       {/* Status & Objects Chart Row */}
       <div className="grid lg:grid-cols-2 gap-5">
         <Card className="border shadow-sm">
