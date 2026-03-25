@@ -13,7 +13,8 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { PriorityBadge } from "@/components/StatusBadge";
-import { Plus, Search, ClipboardList, AlertTriangle, Trash2, History, User } from "lucide-react";
+import { Plus, Search, ClipboardList, AlertTriangle, Trash2, History, User, Zap } from "lucide-react";
+import RootCauseAnalysis from "@/components/RootCauseAnalysis";
 
 const sevColors: Record<string, string> = {
   Critical: "bg-red-500/15 text-red-700 border-red-200",
@@ -47,6 +48,7 @@ export default function IssuesRequirements() {
   const [showAddReq, setShowAddReq] = useState(false);
   const [showAddIssue, setShowAddIssue] = useState(false);
   const [historyItem, setHistoryItem] = useState<Requirement | Issue | null>(null);
+  const [rootCauseIssue, setRootCauseIssue] = useState<Issue | null>(null);
 
   const [newReq, setNewReq] = useState({ title: "", description: "", priority: "Medium" as Priority, assignee: "", linkedType: "General" as LinkedType, linkedId: "", linkedName: "", module: "" });
   const [newIssue, setNewIssue] = useState({ title: "", description: "", severity: "Medium" as IssueSeverity, assignee: "", reportedBy: "", linkedType: "General" as LinkedType, linkedId: "", linkedName: "", module: "" });
@@ -251,6 +253,9 @@ export default function IssuesRequirements() {
                     <TableCell className="text-xs">{iss.assignee}</TableCell>
                     <TableCell>
                       <div className="flex gap-0.5">
+                        <Button variant="ghost" size="icon" className="h-6 w-6" title="Root Cause" onClick={() => setRootCauseIssue(iss)}>
+                          <Zap size={12} className="text-warning" />
+                        </Button>
                         <Button variant="ghost" size="icon" className="h-6 w-6" title="View History" onClick={() => setHistoryItem(iss)}>
                           <History size={12} className="text-muted-foreground" />
                         </Button>
@@ -438,6 +443,9 @@ export default function IssuesRequirements() {
           </div>
         </DialogContent>
       </Dialog>
+
+      {/* Root Cause Analysis */}
+      <RootCauseAnalysis issue={rootCauseIssue} open={!!rootCauseIssue} onOpenChange={() => setRootCauseIssue(null)} />
     </div>
   );
 }

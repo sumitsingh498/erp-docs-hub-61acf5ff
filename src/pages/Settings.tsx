@@ -9,10 +9,12 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Shield, Users, Key, Plus, Search, Trash2, Settings2, Eye, ClipboardList, AlertTriangle } from "lucide-react";
+import { Switch } from "@/components/ui/switch";
+import { Shield, Users, Key, Plus, Search, Trash2, Settings2, Eye, ClipboardList, AlertTriangle, Lock, FileCheck, History, ShieldCheck } from "lucide-react";
 import { useUsersStore, type UserRole, type ERPUser } from "@/data/users-store";
 import { useStore } from "@/data/issues-requirements-store";
 import { erpMasterData, reportData, MODULES, type ERPModule } from "@/data/mock-data";
+import { useGovernanceStore } from "@/data/governance-store";
 
 const ROLES: UserRole[] = ["Admin", "PM", "Consultant", "Developer", "Tester", "Viewer", "Trainer"];
 
@@ -47,6 +49,7 @@ const activityLog = [
 export default function Settings() {
   const { users, addUser, updateUser, removeUser, assignForm, unassignForm, assignReport, unassignReport } = useUsersStore();
   const { requirements, issues } = useStore();
+  const { enabled: governanceEnabled, toggle: toggleGovernance } = useGovernanceStore();
   const [search, setSearch] = useState("");
   const [showAddUser, setShowAddUser] = useState(false);
   const [selectedUser, setSelectedUser] = useState<ERPUser | null>(null);
@@ -124,6 +127,7 @@ export default function Settings() {
         <TabsList>
           <TabsTrigger value="users">Users ({users.length})</TabsTrigger>
           <TabsTrigger value="roles">Role Matrix</TabsTrigger>
+          <TabsTrigger value="governance">Governance</TabsTrigger>
           <TabsTrigger value="activity">Activity Log</TabsTrigger>
         </TabsList>
 
@@ -243,6 +247,53 @@ export default function Settings() {
                   })}
                 </TableBody>
               </Table>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        {/* GOVERNANCE TAB */}
+        <TabsContent value="governance" className="mt-4 space-y-4">
+          <Card className={`border shadow-sm ${governanceEnabled ? "border-primary/30 bg-primary/5" : ""}`}>
+            <CardHeader className="pb-3">
+              <div className="flex items-center justify-between">
+                <CardTitle className="text-base font-semibold flex items-center gap-2">
+                  <ShieldCheck size={18} className="text-primary" />
+                  Governance Mode
+                </CardTitle>
+                <div className="flex items-center gap-2">
+                  <Badge variant={governanceEnabled ? "default" : "secondary"} className="text-xs">
+                    {governanceEnabled ? "ACTIVE" : "OFF"}
+                  </Badge>
+                  <Switch checked={governanceEnabled} onCheckedChange={toggleGovernance} />
+                </div>
+              </div>
+            </CardHeader>
+            <CardContent className="space-y-3">
+              <p className="text-xs text-muted-foreground">
+                When Governance Mode is active, the system enforces enterprise-level controls for audit compliance and data integrity.
+              </p>
+              <div className="grid sm:grid-cols-2 gap-3">
+                {[
+                  { icon: Lock, label: "Approval Required", desc: "No edits without manager approval", active: governanceEnabled },
+                  { icon: ClipboardList, label: "Mandatory Fields", desc: "All required fields enforced on save", active: governanceEnabled },
+                  { icon: History, label: "Version Lock", desc: "Documents locked after approval", active: governanceEnabled },
+                  { icon: FileCheck, label: "Audit Trail", desc: "Every action logged with user & timestamp", active: true },
+                ].map((item) => {
+                  const Icon = item.icon;
+                  return (
+                    <div key={item.label} className={`flex items-start gap-3 p-3 rounded-lg border transition-colors ${item.active ? "bg-primary/5 border-primary/20" : "bg-muted/30 border-border opacity-60"}`}>
+                      <Icon size={16} className={item.active ? "text-primary mt-0.5" : "text-muted-foreground mt-0.5"} />
+                      <div>
+                        <div className="text-sm font-medium text-foreground">{item.label}</div>
+                        <div className="text-xs text-muted-foreground">{item.desc}</div>
+                      </div>
+                      <Badge variant="outline" className={`ml-auto text-[10px] ${item.active ? "bg-green-500/15 text-green-700 border-green-200" : ""}`}>
+                        {item.active ? "ON" : "OFF"}
+                      </Badge>
+                    </div>
+                  );
+                })}
+              </div>
             </CardContent>
           </Card>
         </TabsContent>
