@@ -9,10 +9,12 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Shield, Users, Key, Plus, Search, Trash2, Settings2, Eye, ClipboardList, AlertTriangle } from "lucide-react";
+import { Switch } from "@/components/ui/switch";
+import { Shield, Users, Key, Plus, Search, Trash2, Settings2, Eye, ClipboardList, AlertTriangle, Lock, FileCheck, History, ShieldCheck } from "lucide-react";
 import { useUsersStore, type UserRole, type ERPUser } from "@/data/users-store";
 import { useStore } from "@/data/issues-requirements-store";
 import { erpMasterData, reportData, MODULES, type ERPModule } from "@/data/mock-data";
+import { useGovernanceStore } from "@/data/governance-store";
 
 const ROLES: UserRole[] = ["Admin", "PM", "Consultant", "Developer", "Tester", "Viewer", "Trainer"];
 
