@@ -13,6 +13,11 @@ import TechnicalMapping from "@/pages/TechnicalMapping";
 import Settings from "@/pages/Settings";
 import IssuesRequirements from "@/pages/IssuesRequirements";
 import TaskManagement from "@/pages/TaskManagement";
+import DigitalTwin from "@/pages/DigitalTwin";
+import CompletenessHeatmap from "@/pages/CompletenessHeatmap";
+import KnowledgeGraph from "@/pages/KnowledgeGraph";
+import ConsistencyChecker from "@/pages/ConsistencyChecker";
+import TemplateLibrary from "@/pages/TemplateLibrary";
 import NotFound from "@/pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -33,6 +38,11 @@ const App = () => (
             <Route path="/technical-mapping" element={<TechnicalMapping />} />
             <Route path="/issues-requirements" element={<IssuesRequirements />} />
             <Route path="/tasks" element={<TaskManagement />} />
+            <Route path="/digital-twin" element={<DigitalTwin />} />
+            <Route path="/heatmap" element={<CompletenessHeatmap />} />
+            <Route path="/knowledge-graph" element={<KnowledgeGraph />} />
+            <Route path="/consistency-checker" element={<ConsistencyChecker />} />
+            <Route path="/templates" element={<TemplateLibrary />} />
             <Route path="/settings" element={<Settings />} />
           </Route>
           <Route path="*" element={<NotFound />} />
