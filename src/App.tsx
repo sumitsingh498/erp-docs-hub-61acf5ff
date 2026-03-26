@@ -5,9 +5,8 @@ import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import AppLayout from "@/components/AppLayout";
 import Dashboard from "@/pages/Dashboard";
+import ActionCenter from "@/pages/ActionCenter";
 import MasterRegister from "@/pages/MasterRegister";
-import MenuTree from "@/pages/MenuTree";
-import Modules from "@/pages/Modules";
 import Reports from "@/pages/Reports";
 import TechnicalMapping from "@/pages/TechnicalMapping";
 import Settings from "@/pages/Settings";
@@ -18,6 +17,7 @@ import CompletenessHeatmap from "@/pages/CompletenessHeatmap";
 import KnowledgeGraph from "@/pages/KnowledgeGraph";
 import ConsistencyChecker from "@/pages/ConsistencyChecker";
 import TemplateLibrary from "@/pages/TemplateLibrary";
+import SystemHealth from "@/pages/SystemHealth";
 import NotFound from "@/pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -31,9 +31,8 @@ const App = () => (
         <Routes>
           <Route element={<AppLayout />}>
             <Route path="/" element={<Dashboard />} />
+            <Route path="/action-center" element={<ActionCenter />} />
             <Route path="/master-register" element={<MasterRegister />} />
-            <Route path="/menu-tree" element={<MenuTree />} />
-            <Route path="/modules" element={<Modules />} />
             <Route path="/reports" element={<Reports />} />
             <Route path="/technical-mapping" element={<TechnicalMapping />} />
             <Route path="/issues-requirements" element={<IssuesRequirements />} />
@@ -43,6 +42,7 @@ const App = () => (
             <Route path="/knowledge-graph" element={<KnowledgeGraph />} />
             <Route path="/consistency-checker" element={<ConsistencyChecker />} />
             <Route path="/templates" element={<TemplateLibrary />} />
+            <Route path="/system-health" element={<SystemHealth />} />
             <Route path="/settings" element={<Settings />} />
           </Route>
           <Route path="*" element={<NotFound />} />

@@ -14,7 +14,7 @@ import { Shield, Users, Key, Plus, Search, Trash2, Settings2, Eye, ClipboardList
 import { useUsersStore, type UserRole, type ERPUser } from "@/data/users-store";
 import { useStore } from "@/data/issues-requirements-store";
 import { erpMasterData, reportData, MODULES, type ERPModule } from "@/data/mock-data";
-import { useGovernanceStore } from "@/data/governance-store";
+import { useGovernanceStore, type SystemMode } from "@/data/governance-store";
 
 const ROLES: UserRole[] = ["Admin", "PM", "Consultant", "Developer", "Tester", "Viewer", "Trainer"];
 
@@ -49,7 +49,7 @@ const activityLog = [
 export default function Settings() {
   const { users, addUser, updateUser, removeUser, assignForm, unassignForm, assignReport, unassignReport } = useUsersStore();
   const { requirements, issues } = useStore();
-  const { enabled: governanceEnabled, toggle: toggleGovernance } = useGovernanceStore();
+  const { enabled: governanceEnabled, toggle: toggleGovernance, systemMode, setSystemMode } = useGovernanceStore();
   const [search, setSearch] = useState("");
   const [showAddUser, setShowAddUser] = useState(false);
   const [selectedUser, setSelectedUser] = useState<ERPUser | null>(null);
@@ -272,11 +272,34 @@ export default function Settings() {
               <p className="text-xs text-muted-foreground">
                 When Governance Mode is active, the system enforces enterprise-level controls for audit compliance and data integrity.
               </p>
+              {/* Freeze Mode */}
+              <div className="p-3 rounded-lg border bg-muted/30 mb-3">
+                <div className="text-sm font-medium text-foreground mb-2">System Mode (Freeze Control)</div>
+                <div className="flex gap-2">
+                  {(["Development", "Testing", "Go-Live"] as SystemMode[]).map((mode) => (
+                    <Button
+                      key={mode}
+                      size="sm"
+                      variant={systemMode === mode ? "default" : "outline"}
+                      className="text-xs flex-1"
+                      onClick={() => setSystemMode(mode)}
+                    >
+                      {mode === "Go-Live" ? "🔒" : mode === "Testing" ? "🧪" : "🛠"} {mode}
+                    </Button>
+                  ))}
+                </div>
+                <p className="text-[10px] text-muted-foreground mt-2">
+                  {systemMode === "Go-Live" ? "Editing restricted. Only critical issues allowed. Governance auto-enabled." :
+                   systemMode === "Testing" ? "Limited edits. Testing & validation mode active." :
+                   "Full editing enabled. Development phase active."}
+                </p>
+              </div>
+
               <div className="grid sm:grid-cols-2 gap-3">
                 {[
                   { icon: Lock, label: "Approval Required", desc: "No edits without manager approval", active: governanceEnabled },
                   { icon: ClipboardList, label: "Mandatory Fields", desc: "All required fields enforced on save", active: governanceEnabled },
-                  { icon: History, label: "Version Lock", desc: "Documents locked after approval", active: governanceEnabled },
+                  { icon: History, label: "Version Lock", desc: "Documents locked after approval", active: governanceEnabled || systemMode === "Go-Live" },
                   { icon: FileCheck, label: "Audit Trail", desc: "Every action logged with user & timestamp", active: true },
                 ].map((item) => {
                   const Icon = item.icon;
