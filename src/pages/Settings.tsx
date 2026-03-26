@@ -14,7 +14,7 @@ import { Shield, Users, Key, Plus, Search, Trash2, Settings2, Eye, ClipboardList
 import { useUsersStore, type UserRole, type ERPUser } from "@/data/users-store";
 import { useStore } from "@/data/issues-requirements-store";
 import { erpMasterData, reportData, MODULES, type ERPModule } from "@/data/mock-data";
-import { useGovernanceStore } from "@/data/governance-store";
+import { useGovernanceStore, type SystemMode } from "@/data/governance-store";
 
 const ROLES: UserRole[] = ["Admin", "PM", "Consultant", "Developer", "Tester", "Viewer", "Trainer"];
 
