@@ -11,7 +11,7 @@ import { Badge } from "@/components/ui/badge";
 
 const navItems = [
   { path: "/", label: "Dashboard", icon: LayoutDashboard },
-  { path: "/action-center", label: "Action Center", icon: Zap },
+  
   { path: "/master-register", label: "Master Register", icon: Database },
   { path: "/reports", label: "Reports", icon: FileText },
   { path: "/issues-requirements", label: "Issues & Reqs", icon: AlertTriangle },
