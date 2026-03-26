@@ -49,7 +49,7 @@ const activityLog = [
 export default function Settings() {
   const { users, addUser, updateUser, removeUser, assignForm, unassignForm, assignReport, unassignReport } = useUsersStore();
   const { requirements, issues } = useStore();
-  const { enabled: governanceEnabled, toggle: toggleGovernance } = useGovernanceStore();
+  const { enabled: governanceEnabled, toggle: toggleGovernance, systemMode, setSystemMode } = useGovernanceStore();
   const [search, setSearch] = useState("");
   const [showAddUser, setShowAddUser] = useState(false);
   const [selectedUser, setSelectedUser] = useState<ERPUser | null>(null);
