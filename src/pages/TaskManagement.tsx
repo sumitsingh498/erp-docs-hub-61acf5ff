@@ -2,8 +2,9 @@ import { useState } from "react";
 import { useTaskStore, type TaskStatus, type Task } from "@/data/tasks-store";
 import type { Priority, ERPModule } from "@/data/mock-data";
 import type { LinkedType } from "@/data/issues-requirements-store";
+import { useUsersStore } from "@/data/users-store";
 import { MODULES } from "@/data/mock-data";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -14,7 +15,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { PriorityBadge } from "@/components/StatusBadge";
-import { Plus, Search, CheckSquare, Clock, AlertTriangle, Ban, ListChecks, MessageSquare, Send, Calendar } from "lucide-react";
+import { Plus, Search, CheckSquare, Clock, AlertTriangle, Ban, ListChecks, MessageSquare, Send, Calendar, Lock, Eye, Edit, Paperclip } from "lucide-react";
 
 const statusColors: Record<TaskStatus, string> = {
   Todo: "bg-blue-500/15 text-blue-700 border-blue-200",
@@ -29,7 +30,8 @@ const statusIcons: Record<TaskStatus, typeof Clock> = {
 const STATUSES: TaskStatus[] = ["Todo", "In Progress", "Testing", "Done", "Blocked"];
 
 export default function TaskManagement() {
-  const { tasks, addTask, updateTaskStatus, addComment, removeTask } = useTaskStore();
+  const { tasks, addTask, updateTaskStatus, updateTaskField, addComment, addAttachment } = useTaskStore();
+  const { users } = useUsersStore();
   const [search, setSearch] = useState("");
   const [moduleFilter, setModuleFilter] = useState("all");
   const [statusFilter, setStatusFilter] = useState("all");
@@ -49,6 +51,8 @@ export default function TaskManagement() {
   const counts = STATUSES.reduce((a, s) => ({ ...a, [s]: tasks.filter((t) => t.status === s).length }), {} as Record<string, number>);
   const overdue = tasks.filter((t) => t.status !== "Done" && t.dueDate && new Date(t.dueDate) < new Date()).length;
 
+  const isLocked = (t: Task) => t.status === "Done";
+
   const handleAdd = () => {
     if (!newTask.title.trim()) return;
     addTask(newTask);
@@ -66,8 +70,22 @@ export default function TaskManagement() {
   const handleSendComment = () => {
     if (!newComment.trim() || !detailTask) return;
     addComment(detailTask.id, "Current User", newComment);
-    setNewComment("");
     setDetailTask({ ...detailTask, comments: [...detailTask.comments, { id: "temp", user: "Current User", text: newComment, timestamp: new Date().toISOString() }] });
+    setNewComment("");
+  };
+
+  const handleAddAttachment = () => {
+    if (!detailTask) return;
+    const input = document.createElement("input");
+    input.type = "file";
+    input.onchange = (e: any) => {
+      const file = e.target.files?.[0];
+      if (!file) return;
+      const att = { name: file.name, type: file.type || "file", size: `${(file.size / 1024).toFixed(1)} KB`, uploadedBy: "Current User", uploadedAt: new Date().toISOString() };
+      addAttachment(detailTask.id, att);
+      setDetailTask({ ...detailTask, attachments: [...detailTask.attachments, { ...att, id: "temp" }] });
+    };
+    input.click();
   };
 
   return (
@@ -80,7 +98,6 @@ export default function TaskManagement() {
         <Button size="sm" onClick={() => setShowAdd(true)} className="gap-1.5"><Plus size={14} />New Task</Button>
       </div>
 
-      {/* KPI Cards */}
       <div className="grid grid-cols-3 md:grid-cols-6 gap-3">
         {STATUSES.map((s) => {
           const Icon = statusIcons[s];
@@ -103,7 +120,6 @@ export default function TaskManagement() {
         </Card>
       </div>
 
-      {/* Filters */}
       <div className="flex flex-wrap gap-3 items-center">
         <div className="relative flex-1 min-w-[200px] max-w-sm">
           <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
@@ -111,17 +127,11 @@ export default function TaskManagement() {
         </div>
         <Select value={moduleFilter} onValueChange={setModuleFilter}>
           <SelectTrigger className="w-[140px] h-9 text-sm"><SelectValue placeholder="Module" /></SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">All Modules</SelectItem>
-            {MODULES.map((m) => <SelectItem key={m} value={m}>{m}</SelectItem>)}
-          </SelectContent>
+          <SelectContent><SelectItem value="all">All Modules</SelectItem>{MODULES.map((m) => <SelectItem key={m} value={m}>{m}</SelectItem>)}</SelectContent>
         </Select>
         <Select value={statusFilter} onValueChange={setStatusFilter}>
           <SelectTrigger className="w-[130px] h-9 text-sm"><SelectValue placeholder="Status" /></SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">All Status</SelectItem>
-            {STATUSES.map((s) => <SelectItem key={s} value={s}>{s}</SelectItem>)}
-          </SelectContent>
+          <SelectContent><SelectItem value="all">All Status</SelectItem>{STATUSES.map((s) => <SelectItem key={s} value={s}>{s}</SelectItem>)}</SelectContent>
         </Select>
       </div>
 
@@ -138,47 +148,43 @@ export default function TaskManagement() {
                 <TableRow className="bg-muted/50">
                   <TableHead className="text-[11px] w-[75px]">ID</TableHead>
                   <TableHead className="text-[11px]">Task</TableHead>
-                  <TableHead className="text-[11px] w-[90px]">Linked To</TableHead>
                   <TableHead className="text-[11px] w-[70px]">Priority</TableHead>
                   <TableHead className="text-[11px] w-[90px]">Status</TableHead>
-                  <TableHead className="text-[11px] w-[80px]">Assignee</TableHead>
+                  <TableHead className="text-[11px] w-[80px]">Created By</TableHead>
+                  <TableHead className="text-[11px] w-[80px]">Assign To</TableHead>
+                  <TableHead className="text-[11px] w-[80px]">Approved By</TableHead>
                   <TableHead className="text-[11px] w-[80px]">Due Date</TableHead>
-                  <TableHead className="text-[11px] w-[100px]">Tags</TableHead>
+                  <TableHead className="text-[11px] w-[50px]"></TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {filtered.map((task) => (
-                  <TableRow key={task.id} className="cursor-pointer hover:bg-muted/30" onClick={() => setDetailTask(task)}>
+                  <TableRow key={task.id} className="cursor-pointer hover:bg-muted/30" onClick={() => { setDetailTask(task); setNewComment(""); }}>
                     <TableCell className="font-mono text-xs text-primary">{task.id}</TableCell>
                     <TableCell>
                       <div className="text-sm font-medium">{task.title}</div>
-                      <div className="text-xs text-muted-foreground line-clamp-1">{task.description}</div>
-                    </TableCell>
-                    <TableCell>
-                      <div className="text-xs">{task.linkedName || "—"}</div>
-                      <Badge variant="outline" className="text-[9px] mt-0.5">{task.linkedType}</Badge>
+                      <div className="text-xs text-muted-foreground line-clamp-1">{task.module} · {task.linkedName || "—"}</div>
                     </TableCell>
                     <TableCell><PriorityBadge priority={task.priority} /></TableCell>
                     <TableCell>
-                      <Badge variant="outline" className={`text-[10px] ${statusColors[task.status]}`}>{task.status}</Badge>
+                      <Badge variant="outline" className={`text-[10px] ${statusColors[task.status]}`}>
+                        {isLocked(task) && <Lock size={8} className="mr-0.5" />}{task.status}
+                      </Badge>
                     </TableCell>
+                    <TableCell className="text-xs">{task.createdBy}</TableCell>
                     <TableCell className="text-xs">{task.assignee}</TableCell>
+                    <TableCell className="text-xs">{task.approvedBy || "—"}</TableCell>
                     <TableCell className={`text-xs ${task.dueDate && new Date(task.dueDate) < new Date() && task.status !== "Done" ? "text-destructive font-medium" : "text-muted-foreground"}`}>
                       {task.dueDate || "—"}
                     </TableCell>
                     <TableCell>
-                      <div className="flex flex-wrap gap-0.5">
-                        {task.tags.slice(0, 2).map((tag) => (
-                          <Badge key={tag} variant="secondary" className="text-[9px] px-1">{tag}</Badge>
-                        ))}
-                        {task.tags.length > 2 && <span className="text-[9px] text-muted-foreground">+{task.tags.length - 2}</span>}
-                      </div>
+                      <Button variant="ghost" size="icon" className="h-6 w-6" title={isLocked(task) ? "View" : "Edit"} onClick={(e) => { e.stopPropagation(); setDetailTask(task); setNewComment(""); }}>
+                        {isLocked(task) ? <Eye size={12} className="text-muted-foreground" /> : <Edit size={12} className="text-primary" />}
+                      </Button>
                     </TableCell>
                   </TableRow>
                 ))}
-                {filtered.length === 0 && (
-                  <TableRow><TableCell colSpan={8} className="text-center text-sm text-muted-foreground py-8">No tasks found</TableCell></TableRow>
-                )}
+                {filtered.length === 0 && <TableRow><TableCell colSpan={9} className="text-center text-sm text-muted-foreground py-8">No tasks found</TableCell></TableRow>}
               </TableBody>
             </Table>
           </div>
@@ -196,7 +202,7 @@ export default function TaskManagement() {
                   </div>
                   <div className="space-y-2 min-h-[200px]">
                     {col.map((task) => (
-                      <Card key={task.id} className="border shadow-sm cursor-pointer hover:shadow-md transition-shadow" onClick={() => setDetailTask(task)}>
+                      <Card key={task.id} className="border shadow-sm cursor-pointer hover:shadow-md transition-shadow" onClick={() => { setDetailTask(task); setNewComment(""); }}>
                         <CardContent className="p-3 space-y-1.5">
                           <div className="flex items-center justify-between">
                             <span className="font-mono text-[10px] text-primary">{task.id}</span>
@@ -205,17 +211,8 @@ export default function TaskManagement() {
                           <div className="text-xs font-medium leading-snug">{task.title}</div>
                           <div className="flex items-center justify-between">
                             <span className="text-[10px] text-muted-foreground">{task.assignee}</span>
-                            {task.comments.length > 0 && (
-                              <div className="flex items-center gap-0.5 text-[10px] text-muted-foreground">
-                                <MessageSquare size={10} />{task.comments.length}
-                              </div>
-                            )}
+                            {task.comments.length > 0 && <div className="flex items-center gap-0.5 text-[10px] text-muted-foreground"><MessageSquare size={10} />{task.comments.length}</div>}
                           </div>
-                          {task.tags.length > 0 && (
-                            <div className="flex flex-wrap gap-0.5">
-                              {task.tags.slice(0, 2).map((tag) => <Badge key={tag} variant="secondary" className="text-[8px] px-1 py-0">{tag}</Badge>)}
-                            </div>
-                          )}
                         </CardContent>
                       </Card>
                     ))}
@@ -230,77 +227,120 @@ export default function TaskManagement() {
       {/* Task Detail Dialog */}
       <Dialog open={!!detailTask} onOpenChange={() => setDetailTask(null)}>
         <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
-          {detailTask && (
-            <>
-              <DialogHeader>
-                <DialogTitle className="flex items-center gap-2">
-                  <span className="font-mono text-primary text-sm">{detailTask.id}</span>
-                  {detailTask.title}
-                </DialogTitle>
-              </DialogHeader>
-              <div className="space-y-4">
-                <div className="grid grid-cols-3 gap-3">
-                  <div className="space-y-1">
-                    <Label className="text-xs">Status</Label>
-                    <Select value={detailTask.status} onValueChange={(v) => { updateTaskStatus(detailTask.id, v as TaskStatus); setDetailTask({ ...detailTask, status: v as TaskStatus }); }}>
-                      <SelectTrigger className="h-8 text-xs"><SelectValue /></SelectTrigger>
-                      <SelectContent>{STATUSES.map((s) => <SelectItem key={s} value={s}>{s}</SelectItem>)}</SelectContent>
-                    </Select>
+          {detailTask && (() => {
+            const locked = isLocked(detailTask);
+            return (
+              <>
+                <DialogHeader>
+                  <DialogTitle className="flex items-center gap-2">
+                    <span className="font-mono text-primary text-sm">{detailTask.id}</span>
+                    {detailTask.title}
+                    {locked && <Badge variant="outline" className="text-[9px] bg-green-500/15 text-green-700 gap-1"><Lock size={8} />Locked</Badge>}
+                  </DialogTitle>
+                </DialogHeader>
+                <div className="space-y-4">
+                  <div className="grid grid-cols-3 gap-3">
+                    <div className="space-y-1">
+                      <Label className="text-xs">Status</Label>
+                      {locked ? (
+                        <Badge variant="outline" className={`text-[10px] ${statusColors[detailTask.status]}`}>{detailTask.status}</Badge>
+                      ) : (
+                        <Select value={detailTask.status} onValueChange={(v) => { updateTaskStatus(detailTask.id, v as TaskStatus); setDetailTask({ ...detailTask, status: v as TaskStatus }); }}>
+                          <SelectTrigger className="h-8 text-xs"><SelectValue /></SelectTrigger>
+                          <SelectContent>{STATUSES.map((s) => <SelectItem key={s} value={s}>{s}</SelectItem>)}</SelectContent>
+                        </Select>
+                      )}
+                    </div>
+                    <div className="space-y-1">
+                      <Label className="text-xs">Priority</Label>
+                      {locked ? <PriorityBadge priority={detailTask.priority} /> : (
+                        <Select value={detailTask.priority} onValueChange={(v) => { updateTaskField(detailTask.id, "priority", v); setDetailTask({ ...detailTask, priority: v as Priority }); }}>
+                          <SelectTrigger className="h-8 text-xs"><SelectValue /></SelectTrigger>
+                          <SelectContent>{(["High", "Medium", "Low"] as Priority[]).map((p) => <SelectItem key={p} value={p}>{p}</SelectItem>)}</SelectContent>
+                        </Select>
+                      )}
+                    </div>
+                    <div className="space-y-1">
+                      <Label className="text-xs">Assignee</Label>
+                      {locked ? <div className="text-sm p-1.5">{detailTask.assignee}</div> : (
+                        <Select value={detailTask.assignee || "_"} onValueChange={(v) => { const val = v === "_" ? "" : v; updateTaskField(detailTask.id, "assignee", val); setDetailTask({ ...detailTask, assignee: val }); }}>
+                          <SelectTrigger className="h-8 text-xs"><SelectValue /></SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="_">-- Select --</SelectItem>
+                            {users.filter((u) => u.status === "Active").map((u) => <SelectItem key={u.id} value={u.name.split(" ")[0] + " " + u.name.split(" ")[1]?.charAt(0) + "."}>{u.name}</SelectItem>)}
+                          </SelectContent>
+                        </Select>
+                      )}
+                    </div>
                   </div>
-                  <div className="space-y-1">
-                    <Label className="text-xs">Assignee</Label>
-                    <div className="text-sm p-1.5">{detailTask.assignee}</div>
+                  <div className="grid grid-cols-4 gap-3 text-xs">
+                    <div><span className="text-muted-foreground">Created By:</span> <span className="font-medium">{detailTask.createdBy}</span></div>
+                    <div><span className="text-muted-foreground">Assigned By:</span> <span className="font-medium">{detailTask.assignedBy}</span></div>
+                    <div><span className="text-muted-foreground">Approved By:</span> <span className="font-medium">{detailTask.approvedBy || "Pending"}</span></div>
+                    <div className={detailTask.dueDate && new Date(detailTask.dueDate) < new Date() && !locked ? "text-destructive" : ""}>
+                      <span className="text-muted-foreground">Due:</span> <span className="font-medium">{detailTask.dueDate || "Not set"}</span>
+                    </div>
                   </div>
-                  <div className="space-y-1">
-                    <Label className="text-xs">Due Date</Label>
-                    <div className={`text-sm p-1.5 ${detailTask.dueDate && new Date(detailTask.dueDate) < new Date() && detailTask.status !== "Done" ? "text-destructive font-medium" : ""}`}>
-                      {detailTask.dueDate || "Not set"}
+                  <div>
+                    <Label className="text-xs">Description</Label>
+                    {locked ? <p className="text-sm text-muted-foreground mt-1">{detailTask.description}</p> : (
+                      <Textarea value={detailTask.description} onChange={(e) => setDetailTask({ ...detailTask, description: e.target.value })} onBlur={() => updateTaskField(detailTask.id, "description", detailTask.description)} className="text-sm min-h-[60px] mt-1" />
+                    )}
+                  </div>
+                  <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                    <span>Linked: <Badge variant="outline" className="text-[9px]">{detailTask.linkedType}</Badge> {detailTask.linkedName}</span>
+                    <span>· {detailTask.module}</span>
+                  </div>
+                  {detailTask.tags.length > 0 && (
+                    <div className="flex flex-wrap gap-1">
+                      {detailTask.tags.map((tag) => <Badge key={tag} variant="secondary" className="text-xs">{tag}</Badge>)}
+                    </div>
+                  )}
+
+                  {/* Attachments */}
+                  <div className="border-t pt-3 space-y-2">
+                    <div className="flex items-center justify-between">
+                      <Label className="text-xs font-medium flex items-center gap-1"><Paperclip size={12} />Attachments ({detailTask.attachments.length})</Label>
+                      {!locked && <Button size="sm" variant="outline" className="h-7 text-xs gap-1" onClick={handleAddAttachment}><Plus size={10} />Add File</Button>}
+                    </div>
+                    {detailTask.attachments.length > 0 ? (
+                      <div className="space-y-1">
+                        {detailTask.attachments.map((a) => (
+                          <div key={a.id} className="flex items-center gap-2 p-2 rounded-md bg-muted/30 text-xs">
+                            <Paperclip size={10} className="text-muted-foreground" />
+                            <span className="font-medium">{a.name}</span>
+                            <span className="text-muted-foreground">{a.size}</span>
+                            <span className="text-muted-foreground ml-auto">by {a.uploadedBy}</span>
+                          </div>
+                        ))}
+                      </div>
+                    ) : <p className="text-xs text-muted-foreground text-center py-2">No attachments</p>}
+                  </div>
+
+                  {/* Comments */}
+                  <div className="border-t pt-3 space-y-3">
+                    <Label className="text-xs font-medium flex items-center gap-1"><MessageSquare size={12} />Comments ({detailTask.comments.length})</Label>
+                    <div className="space-y-2 max-h-[200px] overflow-y-auto">
+                      {detailTask.comments.map((c) => (
+                        <div key={c.id} className="flex gap-2 p-2 rounded-md bg-muted/30">
+                          <div className="w-6 h-6 rounded-full bg-primary/15 flex items-center justify-center text-[9px] font-bold text-primary shrink-0">{c.user.charAt(0)}</div>
+                          <div className="flex-1">
+                            <div className="flex items-center gap-2"><span className="text-xs font-medium">{c.user}</span><span className="text-[10px] text-muted-foreground">{new Date(c.timestamp).toLocaleDateString()}</span></div>
+                            <p className="text-xs text-muted-foreground mt-0.5">{c.text}</p>
+                          </div>
+                        </div>
+                      ))}
+                      {detailTask.comments.length === 0 && <p className="text-xs text-muted-foreground text-center py-3">No comments yet</p>}
+                    </div>
+                    <div className="flex gap-2">
+                      <Input value={newComment} onChange={(e) => setNewComment(e.target.value)} placeholder="Add a comment..." className="h-8 text-xs" onKeyDown={(e) => e.key === "Enter" && handleSendComment()} />
+                      <Button size="sm" onClick={handleSendComment} className="h-8 px-3"><Send size={12} /></Button>
                     </div>
                   </div>
                 </div>
-                <div>
-                  <Label className="text-xs">Description</Label>
-                  <p className="text-sm text-muted-foreground mt-1">{detailTask.description}</p>
-                </div>
-                <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                  <span>Linked: <Badge variant="outline" className="text-[9px]">{detailTask.linkedType}</Badge> {detailTask.linkedName}</span>
-                  <span>· {detailTask.module}</span>
-                  <span>· Assigned by {detailTask.assignedBy}</span>
-                </div>
-                {detailTask.tags.length > 0 && (
-                  <div className="flex flex-wrap gap-1">
-                    {detailTask.tags.map((tag) => <Badge key={tag} variant="secondary" className="text-xs">{tag}</Badge>)}
-                  </div>
-                )}
-
-                {/* Comments */}
-                <div className="border-t pt-3 space-y-3">
-                  <Label className="text-xs font-medium">Comments ({detailTask.comments.length})</Label>
-                  <div className="space-y-2 max-h-[200px] overflow-y-auto">
-                    {detailTask.comments.map((c) => (
-                      <div key={c.id} className="flex gap-2 p-2 rounded-md bg-muted/30">
-                        <div className="w-6 h-6 rounded-full bg-primary/15 flex items-center justify-center text-[9px] font-bold text-primary shrink-0">
-                          {c.user.charAt(0)}
-                        </div>
-                        <div className="flex-1">
-                          <div className="flex items-center gap-2">
-                            <span className="text-xs font-medium">{c.user}</span>
-                            <span className="text-[10px] text-muted-foreground">{new Date(c.timestamp).toLocaleDateString()}</span>
-                          </div>
-                          <p className="text-xs text-muted-foreground mt-0.5">{c.text}</p>
-                        </div>
-                      </div>
-                    ))}
-                    {detailTask.comments.length === 0 && <p className="text-xs text-muted-foreground text-center py-3">No comments yet</p>}
-                  </div>
-                  <div className="flex gap-2">
-                    <Input value={newComment} onChange={(e) => setNewComment(e.target.value)} placeholder="Add a comment..." className="h-8 text-xs" onKeyDown={(e) => e.key === "Enter" && handleSendComment()} />
-                    <Button size="sm" onClick={handleSendComment} className="h-8 px-3"><Send size={12} /></Button>
-                  </div>
-                </div>
-              </div>
-            </>
-          )}
+              </>
+            );
+          })()}
         </DialogContent>
       </Dialog>
 
@@ -327,7 +367,13 @@ export default function TaskManagement() {
               </div>
               <div className="space-y-1">
                 <Label className="text-xs">Assignee</Label>
-                <Input value={newTask.assignee} onChange={(e) => setNewTask({ ...newTask, assignee: e.target.value })} className="h-8 text-xs" placeholder="Name" />
+                <Select value={newTask.assignee || "_"} onValueChange={(v) => setNewTask({ ...newTask, assignee: v === "_" ? "" : v })}>
+                  <SelectTrigger className="h-8 text-xs"><SelectValue placeholder="Select" /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="_">-- Select --</SelectItem>
+                    {users.filter((u) => u.status === "Active").map((u) => <SelectItem key={u.id} value={u.name.split(" ")[0] + " " + u.name.split(" ")[1]?.charAt(0) + "."}>{u.name}</SelectItem>)}
+                  </SelectContent>
+                </Select>
               </div>
               <div className="space-y-1">
                 <Label className="text-xs">Due Date</Label>
@@ -351,6 +397,10 @@ export default function TaskManagement() {
               </div>
             </div>
             <div className="space-y-1">
+              <Label className="text-xs">Linked Name</Label>
+              <Input value={newTask.linkedName} onChange={(e) => setNewTask({ ...newTask, linkedName: e.target.value })} className="h-8 text-xs" placeholder="e.g. Sales Order Entry" />
+            </div>
+            <div className="space-y-1">
               <Label className="text-xs">Tags</Label>
               <div className="flex gap-2">
                 <Input value={tagInput} onChange={(e) => setTagInput(e.target.value)} onKeyDown={(e) => e.key === "Enter" && (e.preventDefault(), handleAddTag())} className="h-8 text-xs" placeholder="Add tag & press Enter" />
@@ -358,11 +408,7 @@ export default function TaskManagement() {
               </div>
               {newTask.tags.length > 0 && (
                 <div className="flex flex-wrap gap-1 mt-1">
-                  {newTask.tags.map((tag) => (
-                    <Badge key={tag} variant="secondary" className="text-xs cursor-pointer" onClick={() => setNewTask({ ...newTask, tags: newTask.tags.filter((t) => t !== tag) })}>
-                      {tag} ×
-                    </Badge>
-                  ))}
+                  {newTask.tags.map((tag) => <Badge key={tag} variant="secondary" className="text-xs cursor-pointer" onClick={() => setNewTask({ ...newTask, tags: newTask.tags.filter((t) => t !== tag) })}>{tag} ×</Badge>)}
                 </div>
               )}
             </div>

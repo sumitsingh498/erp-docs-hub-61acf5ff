@@ -5,7 +5,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import AppLayout from "@/components/AppLayout";
 import Dashboard from "@/pages/Dashboard";
-import ActionCenter from "@/pages/ActionCenter";
+
 import MasterRegister from "@/pages/MasterRegister";
 import Reports from "@/pages/Reports";
 import TechnicalMapping from "@/pages/TechnicalMapping";
@@ -31,7 +31,7 @@ const App = () => (
         <Routes>
           <Route element={<AppLayout />}>
             <Route path="/" element={<Dashboard />} />
-            <Route path="/action-center" element={<ActionCenter />} />
+            
             <Route path="/master-register" element={<MasterRegister />} />
             <Route path="/reports" element={<Reports />} />
             <Route path="/technical-mapping" element={<TechnicalMapping />} />

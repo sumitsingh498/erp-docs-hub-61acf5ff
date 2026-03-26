@@ -22,6 +22,15 @@ export interface HistoryEntry {
   newValue: string;
 }
 
+export interface Attachment {
+  id: string;
+  name: string;
+  type: string;
+  size: string;
+  uploadedBy: string;
+  uploadedAt: string;
+}
+
 export interface Requirement {
   id: string;
   title: string;
@@ -30,6 +39,9 @@ export interface Requirement {
   status: ReqStatus;
   assignee: string;
   assignedBy: string;
+  createdBy: string;
+  approvedBy: string;
+  approvedDate: string;
   dueDate: string;
   linkedType: LinkedType;
   linkedId: string;
@@ -39,6 +51,7 @@ export interface Requirement {
   createdAt: string;
   history: HistoryEntry[];
   comments: Comment[];
+  attachments: Attachment[];
 }
 
 export interface Issue {
@@ -50,6 +63,9 @@ export interface Issue {
   reportedBy: string;
   assignee: string;
   assignedBy: string;
+  createdBy: string;
+  approvedBy: string;
+  approvedDate: string;
   dueDate: string;
   linkedType: LinkedType;
   linkedId: string;
@@ -59,19 +75,22 @@ export interface Issue {
   createdAt: string;
   history: HistoryEntry[];
   comments: Comment[];
+  attachments: Attachment[];
 }
 
 interface Store {
   requirements: Requirement[];
   issues: Issue[];
-  addRequirement: (req: Omit<Requirement, "id" | "createdAt" | "history" | "comments">) => void;
-  addIssue: (iss: Omit<Issue, "id" | "createdAt" | "history" | "comments">) => void;
+  addRequirement: (req: Omit<Requirement, "id" | "createdAt" | "history" | "comments" | "attachments" | "approvedBy" | "approvedDate" | "createdBy">) => void;
+  addIssue: (iss: Omit<Issue, "id" | "createdAt" | "history" | "comments" | "attachments" | "approvedBy" | "approvedDate" | "createdBy">) => void;
   updateRequirementStatus: (id: string, status: ReqStatus, changedBy?: string) => void;
   updateIssueStatus: (id: string, status: IssueStatus, changedBy?: string) => void;
   updateRequirementField: (id: string, field: string, value: string, changedBy?: string) => void;
   updateIssueField: (id: string, field: string, value: string, changedBy?: string) => void;
   addRequirementComment: (id: string, user: string, text: string) => void;
   addIssueComment: (id: string, user: string, text: string) => void;
+  addRequirementAttachment: (id: string, att: Omit<Attachment, "id">) => void;
+  addIssueAttachment: (id: string, att: Omit<Attachment, "id">) => void;
   removeRequirement: (id: string) => void;
   removeIssue: (id: string) => void;
 }
@@ -79,6 +98,7 @@ interface Store {
 let reqCounter = 10;
 let issCounter = 10;
 let histCounter = 100;
+let attCounter = 100;
 
 const makeHist = (field: string, oldVal: string, newVal: string, user = "System"): HistoryEntry => ({
   id: `H-${++histCounter}`,
@@ -89,7 +109,7 @@ const makeHist = (field: string, oldVal: string, newVal: string, user = "System"
   newValue: newVal,
 });
 
-const d = (assignedBy = "Admin", dueDate = "", tags: string[] = []): Pick<Requirement, "assignedBy" | "dueDate" | "tags" | "comments"> & Pick<Issue, "assignedBy" | "dueDate" | "tags" | "comments"> => ({ assignedBy, dueDate, tags, comments: [] });
+const d = (assignedBy = "Admin", dueDate = "", tags: string[] = []): Pick<Requirement, "assignedBy" | "dueDate" | "tags" | "comments" | "attachments" | "createdBy" | "approvedBy" | "approvedDate"> => ({ assignedBy, dueDate, tags, comments: [], attachments: [], createdBy: "Admin", approvedBy: "", approvedDate: "" });
 
 const seedRequirements: Requirement[] = [
   { id: "REQ-001", title: "Add HSN code validation", description: "HSN code must be validated against government master list before saving.", priority: "High", status: "In Progress", assignee: "Rajesh K.", linkedType: "Form", linkedId: "ERP0000000074", linkedName: "Item Master Entry", module: "Master", createdAt: "2026-02-10", history: [{ id: "H-001", timestamp: "2026-02-10T09:00:00Z", user: "Rajesh K.", field: "status", oldValue: "Open", newValue: "In Progress" }], ...d("Admin", "2026-04-01", ["Compliance", "GST"]) },
@@ -97,7 +117,7 @@ const seedRequirements: Requirement[] = [
   { id: "REQ-003", title: "Barcode scanning integration", description: "Physical stock verification should support barcode scanner input.", priority: "High", status: "Open", assignee: "Amit S.", linkedType: "Form", linkedId: "MTL0000000631", linkedName: "Physical Stock Verification", module: "Material", createdAt: "2026-03-01", history: [], ...d("Admin", "2026-04-10", ["Integration", "Inventory"]) },
   { id: "REQ-004", title: "Approval workflow for adjustments", description: "FG adjustments above ₹50,000 need manager approval before posting.", priority: "High", status: "In Progress", assignee: "Priya M.", linkedType: "Form", linkedId: "ERP0000000112", linkedName: "FG Stock Adjustment", module: "Finance", createdAt: "2026-02-25", history: [{ id: "H-002", timestamp: "2026-03-01T14:00:00Z", user: "Priya M.", field: "status", oldValue: "Open", newValue: "In Progress" }], ...d("Admin", "2026-03-30", ["Finance", "Workflow"]) },
   { id: "REQ-005", title: "Multi-currency support for AP", description: "Accounts payable invoice should support foreign currency with exchange rate.", priority: "Medium", status: "Open", assignee: "Priya M.", linkedType: "Form", linkedId: "FIN0000000230", linkedName: "Accounts Payable Invoice", module: "Finance", createdAt: "2026-03-05", history: [], ...d("Admin", "2026-05-01", ["Finance"]) },
-  { id: "REQ-006", title: "Trial Balance export to Tally format", description: "Trial balance report must export in Tally-compatible XML.", priority: "Low", status: "Open", assignee: "Priya M.", linkedType: "Report", linkedId: "FIN0000000215", linkedName: "Trial Balance Report", module: "Finance", createdAt: "2026-03-08", history: [], ...d("Admin", "", ["Export", "Statutory"]) },
+  { id: "REQ-006", title: "Trial Balance export to Tally format", description: "Trial balance report must export in Tally-compatible XML.", priority: "Low", status: "Completed", assignee: "Priya M.", linkedType: "Report", linkedId: "FIN0000000215", linkedName: "Trial Balance Report", module: "Finance", createdAt: "2026-03-08", history: [{ id: "H-010", timestamp: "2026-03-20T10:00:00Z", user: "Priya M.", field: "status", oldValue: "Open", newValue: "Completed" }], ...{ ...d("Admin", "", ["Export", "Statutory"]), approvedBy: "Rajesh K.", approvedDate: "2026-03-21" } },
   { id: "REQ-007", title: "BOM version comparison", description: "Allow comparing two BOM versions side by side.", priority: "Medium", status: "Open", assignee: "Suresh R.", linkedType: "Form", linkedId: "ENG0000000035", linkedName: "Bill of Materials", module: "Production", createdAt: "2026-03-10", history: [], ...d("Admin", "2026-04-20", ["Production"]) },
   { id: "REQ-008", title: "MRP demand forecast integration", description: "MRP run should consider sales forecast data from marketing module.", priority: "High", status: "Open", assignee: "Kiran D.", linkedType: "Module", linkedId: "PPC/MRP", linkedName: "PPC/MRP Module", module: "PPC/MRP", createdAt: "2026-03-12", history: [], ...d("Admin", "2026-04-30", ["Integration", "PPC"]) },
   { id: "REQ-009", title: "FRD template standardization", description: "All module FRD documents should follow the same template structure.", priority: "Medium", status: "In Progress", assignee: "Admin", linkedType: "Documentation", linkedId: "DOC-001", linkedName: "FRD Standards", module: "General", createdAt: "2026-03-01", history: [{ id: "H-003", timestamp: "2026-03-05T10:00:00Z", user: "Admin", field: "status", oldValue: "Open", newValue: "In Progress" }], ...d("Admin", "2026-03-25", ["Documentation"]) },
@@ -108,8 +128,8 @@ const seedIssues: Issue[] = [
   { id: "ISS-002", title: "GL posting fails for negative adjustments", description: "Negative adjustment entries are not generating correct GL debit/credit entries.", severity: "High", status: "In Progress", reportedBy: "Priya M.", assignee: "Suresh R.", linkedType: "Form", linkedId: "ERP0000000112", linkedName: "FG Stock Adjustment", module: "Finance", createdAt: "2026-03-15", history: [{ id: "H-004", timestamp: "2026-03-16T11:00:00Z", user: "Suresh R.", field: "status", oldValue: "Open", newValue: "In Progress" }], ...d("Priya M.", "2026-03-28", ["Finance", "Bug"]) },
   { id: "ISS-003", title: "Remarks field truncated at 100 chars", description: "Users report remarks are cut off. DB column needs to be extended.", severity: "Medium", status: "Open", reportedBy: "Neha G.", assignee: "Amit S.", linkedType: "Form", linkedId: "ERP0000000112", linkedName: "FG Stock Adjustment", module: "Finance", createdAt: "2026-03-18", history: [], ...d("Admin", "", ["Bug"]) },
   { id: "ISS-004", title: "Stock ledger report shows wrong opening balance", description: "Opening balance for month does not match previous month closing in some items.", severity: "High", status: "Open", reportedBy: "Amit S.", assignee: "Amit S.", linkedType: "Report", linkedId: "MTL0000000660", linkedName: "Stock Ledger Report", module: "Material", createdAt: "2026-03-14", history: [], ...d("Admin", "2026-03-30", ["Inventory", "Bug"]) },
-  { id: "ISS-005", title: "Sales order saves without customer validation", description: "Orders can be created with inactive customer codes.", severity: "High", status: "Open", reportedBy: "Neha G.", assignee: "Neha G.", linkedType: "Form", linkedId: "SAL0000000045", linkedName: "Sales Order Entry", module: "Sale", createdAt: "2026-03-16", history: [], ...d("Admin", "2026-03-26", ["Sale", "Bug"]) },
-  { id: "ISS-006", title: "Menu tree not loading for Security module", description: "Clicking Security module in menu tree shows blank page.", severity: "Medium", status: "Resolved", reportedBy: "Admin", assignee: "Admin", linkedType: "Module", linkedId: "Security", linkedName: "Security Module", module: "Security", createdAt: "2026-03-10", history: [{ id: "H-005", timestamp: "2026-03-12T16:00:00Z", user: "Admin", field: "status", oldValue: "Open", newValue: "Resolved" }], ...d("Admin", "", ["UI"]) },
+  { id: "ISS-005", title: "Sales order saves without customer validation", description: "Orders can be created with inactive customer codes.", severity: "High", status: "Closed", reportedBy: "Neha G.", assignee: "Neha G.", linkedType: "Form", linkedId: "SAL0000000045", linkedName: "Sales Order Entry", module: "Sale", createdAt: "2026-03-16", history: [{ id: "H-005", timestamp: "2026-03-19T16:00:00Z", user: "Neha G.", field: "status", oldValue: "Open", newValue: "Closed" }], ...{ ...d("Admin", "2026-03-26", ["Sale", "Bug"]), approvedBy: "Rajesh K.", approvedDate: "2026-03-20" } },
+  { id: "ISS-006", title: "Menu tree not loading for Security module", description: "Clicking Security module in menu tree shows blank page.", severity: "Medium", status: "Resolved", reportedBy: "Admin", assignee: "Admin", linkedType: "Module", linkedId: "Security", linkedName: "Security Module", module: "Security", createdAt: "2026-03-10", history: [{ id: "H-006", timestamp: "2026-03-12T16:00:00Z", user: "Admin", field: "status", oldValue: "Open", newValue: "Resolved" }], ...d("Admin", "", ["UI"]) },
   { id: "ISS-007", title: "Data migration mapping document outdated", description: "Migration mapping doc references old table names that were renamed.", severity: "Low", status: "Open", reportedBy: "Kiran D.", assignee: "Admin", linkedType: "Documentation", linkedId: "DOC-002", linkedName: "Data Migration Mapping", module: "General", createdAt: "2026-03-17", history: [], ...d("Kiran D.", "", ["Documentation"]) },
 ];
 
@@ -122,14 +142,14 @@ export const useStore = create<Store>((set) => ({
     set((s) => ({
       requirements: [
         ...s.requirements,
-        { ...req, id: `REQ-${String(++reqCounter).padStart(3, "0")}`, createdAt: new Date().toISOString().split("T")[0], history: [makeHist("created", "", "Created", req.assignee || "System")], comments: [] },
+        { ...req, id: `REQ-${String(++reqCounter).padStart(3, "0")}`, createdAt: new Date().toISOString().split("T")[0], history: [makeHist("created", "", "Created", req.assignee || "System")], comments: [], attachments: [], createdBy: "Current User", approvedBy: "", approvedDate: "" },
       ],
     })),
   addIssue: (iss) =>
     set((s) => ({
       issues: [
         ...s.issues,
-        { ...iss, id: `ISS-${String(++issCounter).padStart(3, "0")}`, createdAt: new Date().toISOString().split("T")[0], history: [makeHist("created", "", "Reported", iss.reportedBy || "System")], comments: [] },
+        { ...iss, id: `ISS-${String(++issCounter).padStart(3, "0")}`, createdAt: new Date().toISOString().split("T")[0], history: [makeHist("created", "", "Reported", iss.reportedBy || "System")], comments: [], attachments: [], createdBy: "Current User", approvedBy: "", approvedDate: "" },
       ],
     })),
   updateRequirementStatus: (id, status, changedBy = "System") =>
@@ -166,6 +186,18 @@ export const useStore = create<Store>((set) => ({
     set((s) => ({
       issues: s.issues.map((i) =>
         i.id === id ? { ...i, comments: [...i.comments, { id: `IC-${++commentCounter}`, user, text, timestamp: new Date().toISOString() }] } : i
+      ),
+    })),
+  addRequirementAttachment: (id, att) =>
+    set((s) => ({
+      requirements: s.requirements.map((r) =>
+        r.id === id ? { ...r, attachments: [...r.attachments, { ...att, id: `RA-${++attCounter}` }] } : r
+      ),
+    })),
+  addIssueAttachment: (id, att) =>
+    set((s) => ({
+      issues: s.issues.map((i) =>
+        i.id === id ? { ...i, attachments: [...i.attachments, { ...att, id: `IA-${++attCounter}` }] } : i
       ),
     })),
   removeRequirement: (id) =>
