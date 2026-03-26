@@ -1,18 +1,18 @@
 import { Link, useLocation } from "react-router-dom";
 import {
-  LayoutDashboard, Database, GitBranch, FolderOpen,
-  FileText, Code2, Shield, ChevronLeft, ChevronRight, AlertTriangle, ListChecks, Search,
-  Network, Grid3X3, Share2, ShieldAlert, BookTemplate,
+  LayoutDashboard, Database, FileText, Shield, ChevronLeft, ChevronRight, AlertTriangle, ListChecks, Search,
+  Network, Grid3X3, Share2, ShieldAlert, BookTemplate, Zap, Activity, Code2,
 } from "lucide-react";
 import { useState } from "react";
 import { cn } from "@/lib/utils";
 import GlobalSearch from "@/components/GlobalSearch";
+import { useGovernanceStore } from "@/data/governance-store";
+import { Badge } from "@/components/ui/badge";
 
 const navItems = [
   { path: "/", label: "Dashboard", icon: LayoutDashboard },
+  { path: "/action-center", label: "Action Center", icon: Zap },
   { path: "/master-register", label: "Master Register", icon: Database },
-  { path: "/menu-tree", label: "Menu Tree", icon: GitBranch },
-  { path: "/modules", label: "Modules", icon: FolderOpen },
   { path: "/reports", label: "Reports", icon: FileText },
   { path: "/issues-requirements", label: "Issues & Reqs", icon: AlertTriangle },
   { path: "/tasks", label: "Tasks", icon: ListChecks },
@@ -22,15 +22,23 @@ const navItems = [
   { path: "/heatmap", label: "Completeness Map", icon: Grid3X3 },
   { path: "/knowledge-graph", label: "Knowledge Graph", icon: Share2 },
   { path: "/consistency-checker", label: "Consistency Check", icon: ShieldAlert },
+  { path: "/system-health", label: "System Health", icon: Activity },
   { path: "/templates", label: "Template Library", icon: BookTemplate },
   { divider: true, label: "System" },
   { path: "/settings", label: "Settings & RBAC", icon: Shield },
 ];
 
+const modeColors: Record<string, string> = {
+  Development: "bg-blue-500/15 text-blue-700 border-blue-200",
+  Testing: "bg-amber-500/15 text-amber-700 border-amber-200",
+  "Go-Live": "bg-green-500/15 text-green-700 border-green-200",
+};
+
 export default function AppSidebar() {
   const location = useLocation();
   const [collapsed, setCollapsed] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
+  const { systemMode } = useGovernanceStore();
 
   return (
     <>
@@ -49,6 +57,15 @@ export default function AppSidebar() {
             {collapsed ? <ChevronRight size={16} /> : <ChevronLeft size={16} />}
           </button>
         </div>
+
+        {/* System Mode Badge */}
+        {!collapsed && (
+          <div className="px-3 pt-2">
+            <Badge variant="outline" className={`text-[9px] w-full justify-center ${modeColors[systemMode]}`}>
+              {systemMode === "Go-Live" ? "🔒" : systemMode === "Testing" ? "🧪" : "🛠"} {systemMode} Mode
+            </Badge>
+          </div>
+        )}
 
         {/* Global Search Button */}
         <div className="px-2 pt-2 pb-1">
@@ -101,7 +118,7 @@ export default function AppSidebar() {
         </nav>
 
         <div className="px-3 py-2 border-t border-sidebar-border">
-          {!collapsed && <div className="text-[9px] text-sidebar-foreground/40">v3.0.0 · ERP Intelligence Platform</div>}
+          {!collapsed && <div className="text-[9px] text-sidebar-foreground/40">v4.0.0 · ERP Intelligence Platform</div>}
         </div>
       </aside>
       <GlobalSearch open={searchOpen} onOpenChange={setSearchOpen} />
