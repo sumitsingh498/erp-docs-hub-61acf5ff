@@ -1,5 +1,5 @@
 import { useState, useCallback } from "react";
-import { erpMasterData, technicalMappings, reportData, MODULES, type ERPModule } from "@/data/mock-data";
+import { erpMasterData, technicalMappings, reportData, sopData, MODULES, type ERPModule } from "@/data/mock-data";
 import { useStore } from "@/data/issues-requirements-store";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
