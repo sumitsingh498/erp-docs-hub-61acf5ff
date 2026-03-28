@@ -10,9 +10,9 @@ import { Label } from "@/components/ui/label";
 import { StatusBadge, PriorityBadge, TypeBadge } from "@/components/StatusBadge";
 import { Progress } from "@/components/ui/progress";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Plus, Save, AlertTriangle, ClipboardList, Settings2, Trash2, Calendar, History, Paperclip, GitBranch, FileText, Database as DbIcon, ArrowRight } from "lucide-react";
+import { Plus, Save, AlertTriangle, ClipboardList, Settings2, Calendar, History, Paperclip, GitBranch, FileText, Database as DbIcon, ArrowRight, BookOpen, CheckCircle2 } from "lucide-react";
 import { useStore, type ReqStatus, type IssueStatus, type IssueSeverity } from "@/data/issues-requirements-store";
-import { technicalMappings, reportData } from "@/data/mock-data";
+import { technicalMappings, reportData, sopData } from "@/data/mock-data";
 import type { ERPMasterItem, ERPStatus, Priority } from "@/data/mock-data";
 
 const sevColors: Record<string, string> = {
@@ -34,7 +34,6 @@ const issStatusColors: Record<string, string> = {
   Closed: "bg-muted text-muted-foreground border-border",
 };
 
-// Mock version history
 const versionHistory: Record<string, { version: string; date: string; change: string; by: string }[]> = {
   ERP0000000074: [
     { version: "v2.1", date: "2026-03-01", change: "Added HSN code field", by: "Rajesh K." },
@@ -44,7 +43,6 @@ const versionHistory: Record<string, { version: string; date: string; change: st
   ],
 };
 
-// Mock attachments
 const attachments: Record<string, { name: string; type: string; size: string; uploaded: string; by: string }[]> = {
   ERP0000000074: [
     { name: "Item_Master_SOP.pdf", type: "PDF", size: "2.4 MB", uploaded: "2026-02-15", by: "Rajesh K." },
@@ -53,12 +51,13 @@ const attachments: Record<string, { name: string; type: string; size: string; up
   ],
 };
 
-// Mock workflow
 const workflows: Record<string, { steps: string[] }> = {
   MTL0000000645: { steps: ["Purchase Indent", "Purchase Order", "GRN Entry", "Quality Check", "Stock Update", "Invoice Matching"] },
   ERP0000000074: { steps: ["Item Request", "Item Code Generation", "Master Data Entry", "Approval", "Activation"] },
   ERP0000000112: { steps: ["Stock Count", "Variance Report", "Adjustment Entry", "Manager Approval", "GL Posting"] },
   SAL0000000045: { steps: ["Quotation", "Sales Order", "Credit Check", "Dispatch", "Invoice", "Payment"] },
+  ENG0000000021: { steps: ["Planned Order", "Work Order Create", "Material Issue", "Production", "QC Check", "FG Receipt"] },
+  FIN0000000201: { steps: ["Journal Entry", "Validation", "Approval", "GL Posting", "Period Close"] },
 };
 
 interface Props {
@@ -75,7 +74,7 @@ export default function FormDetailDialog({ item, open, onOpenChange, onSave }: P
   const [newReq, setNewReq] = useState({ title: "", description: "", priority: "Medium" as Priority, assignee: "" });
   const [newIssue, setNewIssue] = useState({ title: "", description: "", severity: "Medium" as IssueSeverity, assignee: "" });
 
-  const { requirements, issues, addRequirement, addIssue, removeRequirement, removeIssue, updateRequirementStatus, updateIssueStatus } = useStore();
+  const { requirements, issues, addRequirement, addIssue, updateRequirementStatus, updateIssueStatus } = useStore();
 
   const currentItem = editData?.id === item?.id ? editData : item;
   const itemReqs = requirements.filter((r) => r.linkedId === currentItem?.originalId);
@@ -116,6 +115,7 @@ export default function FormDetailDialog({ item, open, onOpenChange, onSave }: P
   const itemWorkflow = workflows[currentItem.originalId] || { steps: ["Entry", "Validation", "Approval", "Posting"] };
   const linkedReports = reportData.filter((r) => r.module === currentItem.module);
   const linkedTables = technicalMappings.filter((t) => t.formId === currentItem.originalId);
+  const itemSOP = sopData.find((s) => s.formId === currentItem.originalId);
 
   return (
     <Dialog open={open} onOpenChange={handleOpen}>
@@ -147,6 +147,10 @@ export default function FormDetailDialog({ item, open, onOpenChange, onSave }: P
         <Tabs defaultValue="details" className="px-5 pt-2 pb-5">
           <TabsList className="mb-3 flex-wrap h-auto gap-1">
             <TabsTrigger value="details" className="text-[11px] gap-1"><Settings2 size={12} />Details</TabsTrigger>
+            <TabsTrigger value="sop" className="text-[11px] gap-1">
+              <BookOpen size={12} />SOP
+              {itemSOP && <CheckCircle2 size={10} className="text-green-600 ml-0.5" />}
+            </TabsTrigger>
             <TabsTrigger value="requirements" className="text-[11px] gap-1">
               <ClipboardList size={12} />Reqs{itemReqs.length > 0 && <Badge variant="secondary" className="ml-0.5 text-[9px] px-1 py-0">{itemReqs.length}</Badge>}
             </TabsTrigger>
@@ -163,41 +167,24 @@ export default function FormDetailDialog({ item, open, onOpenChange, onSave }: P
           {/* Details Tab */}
           <TabsContent value="details" className="space-y-4 mt-0">
             <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-1.5">
-                <Label className="text-xs">Display Name</Label>
-                <Input value={editData?.displayName || ""} onChange={(e) => updateField("displayName", e.target.value)} className="h-9 text-sm" />
-              </div>
-              <div className="space-y-1.5">
-                <Label className="text-xs">Original Name</Label>
-                <Input value={editData?.originalName || ""} onChange={(e) => updateField("originalName", e.target.value)} className="h-9 text-sm font-mono" />
-              </div>
-              <div className="space-y-1.5">
-                <Label className="text-xs">Status</Label>
+              <div className="space-y-1.5"><Label className="text-xs">Display Name</Label><Input value={editData?.displayName || ""} onChange={(e) => updateField("displayName", e.target.value)} className="h-9 text-sm" /></div>
+              <div className="space-y-1.5"><Label className="text-xs">Original Name</Label><Input value={editData?.originalName || ""} onChange={(e) => updateField("originalName", e.target.value)} className="h-9 text-sm font-mono" /></div>
+              <div className="space-y-1.5"><Label className="text-xs">Status</Label>
                 <Select value={editData?.status || "Active"} onValueChange={(v) => updateField("status", v as ERPStatus)}>
                   <SelectTrigger className="h-9 text-sm"><SelectValue /></SelectTrigger>
                   <SelectContent>{(["Active", "In Development", "Testing", "Deprecated"] as ERPStatus[]).map((s) => <SelectItem key={s} value={s}>{s}</SelectItem>)}</SelectContent>
                 </Select>
               </div>
-              <div className="space-y-1.5">
-                <Label className="text-xs">Priority</Label>
+              <div className="space-y-1.5"><Label className="text-xs">Priority</Label>
                 <Select value={editData?.priority || "Medium"} onValueChange={(v) => updateField("priority", v as Priority)}>
                   <SelectTrigger className="h-9 text-sm"><SelectValue /></SelectTrigger>
                   <SelectContent>{(["High", "Medium", "Low"] as Priority[]).map((p) => <SelectItem key={p} value={p}>{p}</SelectItem>)}</SelectContent>
                 </Select>
               </div>
-              <div className="space-y-1.5">
-                <Label className="text-xs">Owner</Label>
-                <Input value={editData?.owner || ""} onChange={(e) => updateField("owner", e.target.value)} className="h-9 text-sm" />
-              </div>
-              <div className="space-y-1.5">
-                <Label className="text-xs">% Complete</Label>
-                <Input type="number" min={0} max={100} value={editData?.percentComplete ?? 0} onChange={(e) => updateField("percentComplete", Number(e.target.value))} className="h-9 text-sm" />
-              </div>
+              <div className="space-y-1.5"><Label className="text-xs">Owner</Label><Input value={editData?.owner || ""} onChange={(e) => updateField("owner", e.target.value)} className="h-9 text-sm" /></div>
+              <div className="space-y-1.5"><Label className="text-xs">% Complete</Label><Input type="number" min={0} max={100} value={editData?.percentComplete ?? 0} onChange={(e) => updateField("percentComplete", Number(e.target.value))} className="h-9 text-sm" /></div>
             </div>
-            <div className="space-y-1.5">
-              <Label className="text-xs">Remarks</Label>
-              <Textarea value={editData?.remarks || ""} onChange={(e) => updateField("remarks", e.target.value)} className="text-sm min-h-[60px]" />
-            </div>
+            <div className="space-y-1.5"><Label className="text-xs">Remarks</Label><Textarea value={editData?.remarks || ""} onChange={(e) => updateField("remarks", e.target.value)} className="text-sm min-h-[60px]" /></div>
             <div className="flex items-center justify-between pt-2 border-t">
               <div className="text-xs text-muted-foreground flex items-center gap-3">
                 <span className="flex items-center gap-1"><Calendar size={12} /> Created: {currentItem.createdAt}</span>
@@ -205,6 +192,78 @@ export default function FormDetailDialog({ item, open, onOpenChange, onSave }: P
               </div>
               <Button size="sm" onClick={handleSave} className="gap-1.5"><Save size={14} />Save</Button>
             </div>
+          </TabsContent>
+
+          {/* SOP Tab */}
+          <TabsContent value="sop" className="space-y-4 mt-0">
+            {itemSOP ? (
+              <div className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <h3 className="text-sm font-semibold text-foreground">{itemSOP.title}</h3>
+                    <div className="flex items-center gap-2 mt-1">
+                      <Badge variant="outline" className="text-[10px]">{itemSOP.version}</Badge>
+                      <span className="text-xs text-muted-foreground">Updated: {itemSOP.lastUpdated}</span>
+                      <span className="text-xs text-muted-foreground">Approved: {itemSOP.approvedBy}</span>
+                    </div>
+                  </div>
+                  <Badge variant="outline" className="bg-green-500/15 text-green-700 text-xs gap-1"><CheckCircle2 size={12} />SOP Available</Badge>
+                </div>
+
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="p-3 rounded-lg bg-muted/30 border">
+                    <div className="text-xs font-semibold text-foreground mb-1">Objective</div>
+                    <p className="text-xs text-muted-foreground">{itemSOP.objective}</p>
+                  </div>
+                  <div className="p-3 rounded-lg bg-muted/30 border">
+                    <div className="text-xs font-semibold text-foreground mb-1">Scope</div>
+                    <p className="text-xs text-muted-foreground">{itemSOP.scope}</p>
+                  </div>
+                </div>
+
+                <div>
+                  <div className="text-xs font-semibold text-foreground mb-2">Procedure Steps</div>
+                  <div className="border rounded-lg overflow-hidden">
+                    <Table>
+                      <TableHeader>
+                        <TableRow className="bg-muted/40">
+                          <TableHead className="text-[11px] w-[50px]">Step</TableHead>
+                          <TableHead className="text-[11px]">Action</TableHead>
+                          <TableHead className="text-[11px] w-[100px]">Responsible</TableHead>
+                          <TableHead className="text-[11px] w-[140px]">Output</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {itemSOP.steps.map((s) => (
+                          <TableRow key={s.step}>
+                            <TableCell className="text-xs font-bold text-primary">{s.step}</TableCell>
+                            <TableCell className="text-xs">{s.action}</TableCell>
+                            <TableCell className="text-xs text-muted-foreground">{s.responsible}</TableCell>
+                            <TableCell className="text-xs text-muted-foreground">{s.output}</TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  </div>
+                </div>
+
+                {itemSOP.references.length > 0 && (
+                  <div>
+                    <div className="text-xs font-semibold text-foreground mb-1">References</div>
+                    <div className="flex flex-wrap gap-1.5">
+                      {itemSOP.references.map((ref, i) => <Badge key={i} variant="secondary" className="text-xs">{ref}</Badge>)}
+                    </div>
+                  </div>
+                )}
+              </div>
+            ) : (
+              <div className="border rounded-lg p-8 text-center">
+                <BookOpen className="mx-auto mb-2 text-muted-foreground" size={32} />
+                <p className="text-sm font-medium text-foreground">SOP Not Available</p>
+                <p className="text-xs text-muted-foreground mt-1">Standard Operating Procedure for this {currentItem.type.toLowerCase()} has not been created yet.</p>
+                <p className="text-xs text-muted-foreground mt-0.5">Use the Template Library to generate one.</p>
+              </div>
+            )}
           </TabsContent>
 
           {/* Requirements Tab */}
@@ -226,10 +285,7 @@ export default function FormDetailDialog({ item, open, onOpenChange, onSave }: P
                   </div>
                 </div>
                 <Textarea value={newReq.description} onChange={(e) => setNewReq({ ...newReq, description: e.target.value })} className="text-sm min-h-[40px]" placeholder="Description..." />
-                <div className="flex justify-end gap-2">
-                  <Button size="sm" variant="ghost" onClick={() => setShowNewReq(false)} className="text-xs h-7">Cancel</Button>
-                  <Button size="sm" onClick={handleAddReq} className="text-xs h-7"><Plus size={12} />Add</Button>
-                </div>
+                <div className="flex justify-end gap-2"><Button size="sm" variant="ghost" onClick={() => setShowNewReq(false)} className="text-xs h-7">Cancel</Button><Button size="sm" onClick={handleAddReq} className="text-xs h-7"><Plus size={12} />Add</Button></div>
               </div>
             )}
             {itemReqs.length > 0 ? (
@@ -241,7 +297,6 @@ export default function FormDetailDialog({ item, open, onOpenChange, onSave }: P
                     <TableHead className="text-[11px] w-[70px]">Priority</TableHead>
                     <TableHead className="text-[11px] w-[85px]">Status</TableHead>
                     <TableHead className="text-[11px] w-[80px]">Assignee</TableHead>
-                    <TableHead className="text-[11px] w-[35px]"></TableHead>
                   </TableRow></TableHeader>
                   <TableBody>
                     {itemReqs.map((req) => (
@@ -256,17 +311,13 @@ export default function FormDetailDialog({ item, open, onOpenChange, onSave }: P
                           </Select>
                         </TableCell>
                         <TableCell className="text-xs">{req.assignee}</TableCell>
-                        <TableCell><Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => removeRequirement(req.id)}><Trash2 size={12} className="text-muted-foreground" /></Button></TableCell>
                       </TableRow>
                     ))}
                   </TableBody>
                 </Table>
               </div>
             ) : !showNewReq && (
-              <div className="border rounded-lg p-6 text-center">
-                <ClipboardList className="mx-auto mb-2 text-muted-foreground" size={24} />
-                <p className="text-sm text-muted-foreground">No requirements yet</p>
-              </div>
+              <div className="border rounded-lg p-6 text-center"><ClipboardList className="mx-auto mb-2 text-muted-foreground" size={24} /><p className="text-sm text-muted-foreground">No requirements yet</p></div>
             )}
           </TabsContent>
 
@@ -289,10 +340,7 @@ export default function FormDetailDialog({ item, open, onOpenChange, onSave }: P
                   </div>
                 </div>
                 <Textarea value={newIssue.description} onChange={(e) => setNewIssue({ ...newIssue, description: e.target.value })} className="text-sm min-h-[40px]" placeholder="Description..." />
-                <div className="flex justify-end gap-2">
-                  <Button size="sm" variant="ghost" onClick={() => setShowNewIssue(false)} className="text-xs h-7">Cancel</Button>
-                  <Button size="sm" onClick={handleAddIssue} className="text-xs h-7"><Plus size={12} />Report</Button>
-                </div>
+                <div className="flex justify-end gap-2"><Button size="sm" variant="ghost" onClick={() => setShowNewIssue(false)} className="text-xs h-7">Cancel</Button><Button size="sm" onClick={handleAddIssue} className="text-xs h-7"><Plus size={12} />Report</Button></div>
               </div>
             )}
             {itemIssues.length > 0 ? (
@@ -304,7 +352,6 @@ export default function FormDetailDialog({ item, open, onOpenChange, onSave }: P
                     <TableHead className="text-[11px] w-[75px]">Severity</TableHead>
                     <TableHead className="text-[11px] w-[85px]">Status</TableHead>
                     <TableHead className="text-[11px] w-[80px]">Assignee</TableHead>
-                    <TableHead className="text-[11px] w-[35px]"></TableHead>
                   </TableRow></TableHeader>
                   <TableBody>
                     {itemIssues.map((iss) => (
@@ -319,17 +366,13 @@ export default function FormDetailDialog({ item, open, onOpenChange, onSave }: P
                           </Select>
                         </TableCell>
                         <TableCell className="text-xs">{iss.assignee}</TableCell>
-                        <TableCell><Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => removeIssue(iss.id)}><Trash2 size={12} className="text-muted-foreground" /></Button></TableCell>
                       </TableRow>
                     ))}
                   </TableBody>
                 </Table>
               </div>
             ) : !showNewIssue && (
-              <div className="border rounded-lg p-6 text-center">
-                <AlertTriangle className="mx-auto mb-2 text-muted-foreground" size={24} />
-                <p className="text-sm text-muted-foreground">No issues reported</p>
-              </div>
+              <div className="border rounded-lg p-6 text-center"><AlertTriangle className="mx-auto mb-2 text-muted-foreground" size={24} /><p className="text-sm text-muted-foreground">No issues reported</p></div>
             )}
           </TabsContent>
 
@@ -373,9 +416,7 @@ export default function FormDetailDialog({ item, open, onOpenChange, onSave }: P
                   <TableBody>
                     {itemAttachments.map((att, i) => (
                       <TableRow key={i}>
-                        <TableCell className="text-sm font-medium flex items-center gap-2">
-                          <Paperclip size={12} className="text-muted-foreground" />{att.name}
-                        </TableCell>
+                        <TableCell className="text-sm font-medium flex items-center gap-2"><Paperclip size={12} className="text-muted-foreground" />{att.name}</TableCell>
                         <TableCell><Badge variant="outline" className="text-[10px]">{att.type}</Badge></TableCell>
                         <TableCell className="text-xs text-muted-foreground">{att.size}</TableCell>
                         <TableCell className="text-xs text-muted-foreground">{att.uploaded}</TableCell>
@@ -386,10 +427,7 @@ export default function FormDetailDialog({ item, open, onOpenChange, onSave }: P
                 </Table>
               </div>
             ) : (
-              <div className="border rounded-lg p-6 text-center">
-                <Paperclip className="mx-auto mb-2 text-muted-foreground" size={24} />
-                <p className="text-sm text-muted-foreground">No attachments yet</p>
-              </div>
+              <div className="border rounded-lg p-6 text-center"><Paperclip className="mx-auto mb-2 text-muted-foreground" size={24} /><p className="text-sm text-muted-foreground">No attachments yet</p></div>
             )}
           </TabsContent>
 
@@ -399,9 +437,7 @@ export default function FormDetailDialog({ item, open, onOpenChange, onSave }: P
             <div className="flex items-center gap-1 flex-wrap p-4 border rounded-lg bg-muted/20">
               {itemWorkflow.steps.map((step, i) => (
                 <div key={i} className="flex items-center gap-1">
-                  <div className="px-3 py-2 rounded-md bg-primary/10 border border-primary/20 text-sm font-medium text-primary">
-                    {step}
-                  </div>
+                  <div className="px-3 py-2 rounded-md bg-primary/10 border border-primary/20 text-sm font-medium text-primary">{step}</div>
                   {i < itemWorkflow.steps.length - 1 && <ArrowRight size={16} className="text-muted-foreground mx-1" />}
                 </div>
               ))}
@@ -435,10 +471,7 @@ export default function FormDetailDialog({ item, open, onOpenChange, onSave }: P
                 </Table>
               </div>
             ) : (
-              <div className="border rounded-lg p-6 text-center">
-                <FileText className="mx-auto mb-2 text-muted-foreground" size={24} />
-                <p className="text-sm text-muted-foreground">No linked reports</p>
-              </div>
+              <div className="border rounded-lg p-6 text-center"><FileText className="mx-auto mb-2 text-muted-foreground" size={24} /><p className="text-sm text-muted-foreground">No linked reports</p></div>
             )}
           </TabsContent>
 
@@ -449,30 +482,17 @@ export default function FormDetailDialog({ item, open, onOpenChange, onSave }: P
               <div className="space-y-3">
                 {linkedTables.map((t) => (
                   <div key={t.id} className="border rounded-lg p-4 bg-muted/20 space-y-2">
-                    <div className="flex items-center gap-2">
-                      <DbIcon size={14} className="text-primary" />
-                      <span className="font-mono text-sm text-primary font-medium">{t.tableName}</span>
-                    </div>
+                    <div className="flex items-center gap-2"><DbIcon size={14} className="text-primary" /><span className="font-mono text-sm text-primary font-medium">{t.tableName}</span></div>
                     <div className="grid grid-cols-2 gap-3 text-xs">
-                      <div>
-                        <span className="text-muted-foreground">API Endpoint:</span>
-                        <span className="ml-2 font-mono bg-muted px-1.5 py-0.5 rounded">{t.apiEndpoint}</span>
-                      </div>
-                      <div>
-                        <span className="text-muted-foreground">Module:</span>
-                        <span className="ml-2">{t.module}</span>
-                      </div>
+                      <div><span className="text-muted-foreground">API Endpoint:</span><span className="ml-2 font-mono bg-muted px-1.5 py-0.5 rounded">{t.apiEndpoint}</span></div>
+                      <div><span className="text-muted-foreground">Module:</span><span className="ml-2">{t.module}</span></div>
                     </div>
                     <div className="text-xs text-muted-foreground">{t.logicDescription}</div>
                   </div>
                 ))}
               </div>
             ) : (
-              <div className="border rounded-lg p-6 text-center">
-                <DbIcon className="mx-auto mb-2 text-muted-foreground" size={24} />
-                <p className="text-sm text-muted-foreground">No table mapping defined</p>
-                <p className="text-xs text-muted-foreground mt-1">Add mapping via Technical Mapping page</p>
-              </div>
+              <div className="border rounded-lg p-6 text-center"><DbIcon className="mx-auto mb-2 text-muted-foreground" size={24} /><p className="text-sm text-muted-foreground">No table mapping defined</p><p className="text-xs text-muted-foreground mt-1">Add mapping via Technical Mapping page</p></div>
             )}
           </TabsContent>
         </Tabs>
