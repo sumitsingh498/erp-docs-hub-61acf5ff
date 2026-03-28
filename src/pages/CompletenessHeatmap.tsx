@@ -1,4 +1,4 @@
-import { erpMasterData, dashboardStats, MODULES, type ERPModule } from "@/data/mock-data";
+import { erpMasterData, technicalMappings, MODULES, type ERPModule } from "@/data/mock-data";
 import { useStore } from "@/data/issues-requirements-store";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -44,9 +44,11 @@ export default function CompletenessHeatmap() {
     const moduleReqs = requirements.filter((r) => r.module === module);
     const completedReqs = moduleReqs.filter((r) => r.status === "Completed").length;
     const testPct = moduleReqs.length > 0 ? Math.round((completedReqs / moduleReqs.length) * 100) : (avgCompletion > 80 ? 85 : 40);
-    // Mock technical mapping pct
-    const mappedForms = forms.filter((f) => f.type === "FORM").length;
-    const tmPct = mappedForms > 0 ? Math.min(100, Math.round((Math.random() * 40 + 50))) : 0;
+
+    // Real technical mapping % — count forms that have at least one mapping
+    const moduleForms = forms.filter((f) => f.type === "FORM");
+    const mappedCount = moduleForms.filter((f) => technicalMappings.some((tm) => tm.formId === f.originalId)).length;
+    const tmPct = moduleForms.length > 0 ? Math.round((mappedCount / moduleForms.length) * 100) : 0;
 
     return {
       module,
@@ -76,98 +78,59 @@ export default function CompletenessHeatmap() {
         <p className="text-sm text-muted-foreground">Module-wise completeness across all dimensions — Color-coded for instant visibility</p>
       </div>
 
-      {/* Summary Cards */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
         <Card className="border shadow-sm">
           <CardContent className="p-4 flex items-center gap-3">
-            <div className={`p-2 rounded-lg ${getBgColor(overallScore)}`}>
-              <TrendingUp size={18} className={getTextColor(overallScore)} />
-            </div>
-            <div>
-              <div className={`text-2xl font-bold ${getTextColor(overallScore)}`}>{overallScore}%</div>
-              <div className="text-xs text-muted-foreground">Overall Score</div>
-            </div>
+            <div className={`p-2 rounded-lg ${getBgColor(overallScore)}`}><TrendingUp size={18} className={getTextColor(overallScore)} /></div>
+            <div><div className={`text-2xl font-bold ${getTextColor(overallScore)}`}>{overallScore}%</div><div className="text-xs text-muted-foreground">Overall Score</div></div>
           </CardContent>
         </Card>
+        <Card className="border shadow-sm"><CardContent className="p-4"><div className="text-2xl font-bold text-foreground">{MODULES.length}</div><div className="text-xs text-muted-foreground">Modules Tracked</div></CardContent></Card>
         <Card className="border shadow-sm">
-          <CardContent className="p-4">
-            <div className="text-2xl font-bold text-foreground">{MODULES.length}</div>
-            <div className="text-xs text-muted-foreground">Modules Tracked</div>
-          </CardContent>
+          <CardContent className="p-4 flex items-center gap-3"><CheckCircle2 size={18} className="text-green-600" /><div><div className="text-2xl font-bold text-green-600">{healthyModules.length}</div><div className="text-xs text-muted-foreground">Healthy (≥80%)</div></div></CardContent>
         </Card>
         <Card className="border shadow-sm">
-          <CardContent className="p-4 flex items-center gap-3">
-            <CheckCircle2 size={18} className="text-green-600" />
-            <div>
-              <div className="text-2xl font-bold text-green-600">{healthyModules.length}</div>
-              <div className="text-xs text-muted-foreground">Healthy (≥80%)</div>
-            </div>
-          </CardContent>
-        </Card>
-        <Card className="border shadow-sm">
-          <CardContent className="p-4 flex items-center gap-3">
-            <AlertTriangle size={18} className="text-destructive" />
-            <div>
-              <div className="text-2xl font-bold text-destructive">{criticalModules.length}</div>
-              <div className="text-xs text-muted-foreground">Critical (&lt;50%)</div>
-            </div>
-          </CardContent>
+          <CardContent className="p-4 flex items-center gap-3"><AlertTriangle size={18} className="text-destructive" /><div><div className="text-2xl font-bold text-destructive">{criticalModules.length}</div><div className="text-xs text-muted-foreground">Critical (&lt;50%)</div></div></CardContent>
         </Card>
       </div>
 
-      {/* Heatmap Grid */}
       <Card className="border shadow-sm">
-        <CardHeader className="pb-2">
-          <CardTitle className="text-sm font-semibold">Module × Dimension Heatmap</CardTitle>
-        </CardHeader>
+        <CardHeader className="pb-2"><CardTitle className="text-sm font-semibold">Module × Dimension Heatmap</CardTitle></CardHeader>
         <CardContent>
           <div className="overflow-x-auto">
             <table className="w-full">
               <thead>
                 <tr>
                   <th className="text-left text-xs font-semibold text-foreground p-2 w-[120px]">Module</th>
-                  {dimensions.map((d) => (
-                    <th key={d} className="text-center text-xs font-semibold text-foreground p-2">{d}</th>
-                  ))}
+                  {dimensions.map((d) => <th key={d} className="text-center text-xs font-semibold text-foreground p-2">{d}</th>)}
                   <th className="text-center text-xs font-semibold text-foreground p-2">Overall</th>
                 </tr>
               </thead>
               <tbody>
                 {heatmapData.map((row) => (
                   <tr key={row.module} className="border-t border-border">
-                    <td className="p-2">
-                      <div className="text-sm font-medium text-foreground">{row.module}</div>
-                      <div className="text-[10px] text-muted-foreground">{row.formCount} forms</div>
-                    </td>
+                    <td className="p-2"><div className="text-sm font-medium text-foreground">{row.module}</div><div className="text-[10px] text-muted-foreground">{row.formCount} forms</div></td>
                     {dimensions.map((d) => {
                       const val = row.values[d];
                       return (
                         <td key={d} className="p-1.5 text-center">
                           <Tooltip>
                             <TooltipTrigger asChild>
-                              <div className={`mx-auto w-16 h-10 rounded-md flex items-center justify-center text-xs font-bold text-white ${getColor(val)} cursor-default transition-transform hover:scale-110`}>
-                                {val}%
-                              </div>
+                              <div className={`mx-auto w-16 h-10 rounded-md flex items-center justify-center text-xs font-bold text-white ${getColor(val)} cursor-default transition-transform hover:scale-110`}>{val}%</div>
                             </TooltipTrigger>
-                            <TooltipContent>
-                              <p className="text-xs">{row.module} — {d}: {val}%</p>
-                            </TooltipContent>
+                            <TooltipContent><p className="text-xs">{row.module} — {d}: {val}%</p></TooltipContent>
                           </Tooltip>
                         </td>
                       );
                     })}
                     <td className="p-1.5 text-center">
-                      <div className={`mx-auto w-16 h-10 rounded-md flex items-center justify-center text-xs font-bold border-2 ${getBgColor(row.overall)} ${getTextColor(row.overall)}`}>
-                        {row.overall}%
-                      </div>
+                      <div className={`mx-auto w-16 h-10 rounded-md flex items-center justify-center text-xs font-bold border-2 ${getBgColor(row.overall)} ${getTextColor(row.overall)}`}>{row.overall}%</div>
                     </td>
                   </tr>
                 ))}
               </tbody>
             </table>
           </div>
-
-          {/* Legend */}
           <div className="flex items-center gap-4 mt-4 pt-3 border-t border-border">
             <span className="text-xs text-muted-foreground">Legend:</span>
             <div className="flex items-center gap-1.5"><div className="w-4 h-4 rounded bg-green-500" /><span className="text-xs">≥80% Complete</span></div>

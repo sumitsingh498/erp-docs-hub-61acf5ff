@@ -1,5 +1,5 @@
 import { useState, useCallback } from "react";
-import { erpMasterData, technicalMappings, reportData, MODULES, type ERPModule } from "@/data/mock-data";
+import { erpMasterData, technicalMappings, reportData, sopData, MODULES, type ERPModule } from "@/data/mock-data";
 import { useStore } from "@/data/issues-requirements-store";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -140,6 +140,9 @@ export default function DigitalTwin() {
                     <ClipboardList size={10} className={stats.reqs > 0 ? "text-primary" : ""} />
                     {stats.reqs} reqs
                   </span>
+                  {sopData.some((s) => s.formId === form.originalId) && (
+                    <Badge variant="outline" className="text-[10px] bg-green-500/10 text-green-600 border-green-200">SOP</Badge>
+                  )}
                   <span className="ml-auto">{form.percentComplete}%</span>
                 </div>
               </CardContent>
